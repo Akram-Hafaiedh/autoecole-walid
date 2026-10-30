@@ -12,6 +12,10 @@ app/
   (public)/             marketing site: /, /formules, /contact
   (admin)/admin/        internal tool: /admin (shell only for now)
   (auth)/connexion/     login page: email code, no password
+actions/
+  auth.ts               server actions: requestCode, verifyCode, logout
+components/
+  auth/LoginForm.tsx    login form (client component)
 lib/
   site.ts               school name, phone, hours, offers (edit this first)
   ui.ts                 shared button classes
@@ -80,7 +84,7 @@ lands on `/admin`. The session lasts 7 days.
 Because there is no password, whoever controls that mailbox controls the
 dashboard. Turn on 2-step verification on the owner's email account.
 
-Rules enforced in `app/(auth)/connexion/actions.ts` and `lib/otp.ts`:
+Rules enforced in `actions/auth.ts` and `lib/otp.ts`:
 
 - A code is valid 10 minutes, works once, and stops working after 5 guesses.
 - Only the newest code works. One request per minute, 5 per hour.

@@ -1,65 +1,38 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { logout } from "@/actions/auth";
 import { requireAdmin } from "@/lib/auth";
-import { site } from "@/lib/site";
 
-export const metadata: Metadata = {
-    title: "Administration",
-    robots: { index: false, follow: false },
-};
+const cards = [
+  { label: "Élèves", hint: "Fiches et suivi des élèves" },
+  { label: "Moniteurs", hint: "Équipe et disponibilités" },
+  { label: "Véhicules", hint: "Flotte et entretien" },
+  { label: "Leçons à venir", hint: "Planning sans double réservation" },
+];
 
-const sections = ["Tableau de bord", "Élèves", "Moniteurs", "Véhicules", "Planning"];
+export default async function AdminHomePage() {
+  // The layout checks too, but layouts are not re-run on every navigation.
+  await requireAdmin();
 
-export default async function AdminLayout({
-    children,
-}: Readonly<{
-    children: React.ReactNode;
-}>) {
-    await requireAdmin();
+  return (
+    <div className="mx-auto max-w-4xl">
+      <h1 className="text-2xl font-semibold tracking-tight">Tableau de bord</h1>
 
-    return (
-        <div className="flex flex-1 flex-col md:flex-row">
-            <aside className="border-b border-line bg-surface md:w-56 md:border-b-0 md:border-r">
-                <div className="px-4 py-4 sm:px-6 md:px-4">
-                    <Link href="/admin" className="font-semibold tracking-tight">
-                        {site.name}
-                    </Link>
-                    <p className="text-xs text-muted">Administration</p>
-                </div>
-                <ul className="flex gap-1 overflow-x-auto px-4 pb-3 text-sm sm:px-6 md:flex-col md:px-2 md:pb-4">
-                    {sections.map((label, index) => (
-                        <li key={label} className="shrink-0">
-                            {index === 0 ? (
-                                <Link
-                                    href="/admin"
-                                    className="block rounded-md bg-line/60 px-3 py-1.5 font-medium"
-                                >
-                                    {label}
-                                </Link>
-                            ) : (
-                                <span
-                                    className="block cursor-not-allowed rounded-md px-3 py-1.5 text-muted"
-                                    title="Bientôt disponible"
-                                >
-                                    {label}
-                                </span>
-                            )}
-                        </li>
-                    ))}
-                    <li className="shrink-0 md:mt-4">
-                        <form action={logout}>
-                            <button
-                                type="submit"
-                                className="block w-full rounded-md px-3 py-1.5 text-left text-muted hover:bg-line/40 hover:text-foreground"
-                            >
-                                Déconnexion
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </aside>
-            <div className="min-w-0 flex-1 px-4 py-8 sm:px-6">{children}</div>
-        </div>
-    );
+      <p className="mt-4 rounded-md border border-line bg-surface p-4 text-sm text-muted">
+        Cette page est une coquille. La connexion par code e-mail protège
+        l’accès, mais les écrans élèves, moniteurs, véhicules et planning ne
+        sont pas encore construits.
+      </p>
+
+      <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+        {cards.map((card) => (
+          <li
+            key={card.label}
+            className="rounded-lg border border-line bg-surface p-5"
+          >
+            <p className="text-sm text-muted">{card.label}</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">–</p>
+            <p className="mt-2 text-xs text-muted">{card.hint}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
