@@ -1,0 +1,138 @@
+// Auto-École Walid: v1 data model.
+//
+// Prisma cannot express "no overlapping lessons" or "driving lessons need a car".
+// Those rules live in prisma/constraints.sql, which you append to the first
+// migration (see README, section "Database").
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // The connection string is set in prisma.config.ts.
+}
+
+enum StudentStatus {
+  active
+  paused
+  completed
+  archived
+
+  @@map("student_status")
+}
+
+enum LessonKind {
+  driving
+  code
+  exam
+
+  @@map("lesson_kind")
+}
+
+enum LessonStatus {
+  scheduled
+  completed
+  cancelled
+  no_show
+
+  @@map("lesson_status")
+}
+
+enum Transmission {
+  manual
+  automatic
+
+  @@map("transmission")
+}
+
+model Student {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName       String        @map("first_name")
+  lastName        String        @map("last_name")
+  phone           String?
+  email           String?
+  birthDate       DateTime?     @map("birth_date") @db.Date
+  /// Sensitive: only ever read inside the admin.
+  nationalId      String?       @map("national_id")
+  licenceCategory String        @default("B") @map("licence_category")
+  status          StudentStatus @default(active)
+  notes           String?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  lessons Lesson[]
+
+  @@map("students")
+}
+
+model Instructor {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName  String   @map("first_name")
+  lastName   String   @map("last_name")
+  phone      String?
+  email      String?
+  active     Boolean  @default(true)
+  /// Link to the login account once auth exists.
+  authUserId String?  @unique @map("auth_user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  lessons Lesson[]
+
+  @@map("instructors")
+}
+
+model Car {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// For example "Clio blanche".
+  label           String
+  plate           String       @unique
+  transmission    Transmission @default(manual)
+  active          Boolean      @default(true)
+  nextServiceDate DateTime?    @map("next_service_date") @db.Date
+  notes           String?
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  lessons Lesson[]
+
+  @@map("cars")
+}
+
+/// One-time login codes emailed to the owner. Only a keyed hash of the code is stored.
+model LoginCode {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codeHash  String    @map("code_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  /// Wrong or right guesses made against this code. Capped in lib/otp.ts.
+  attempts  Int       @default(0)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt])
+  @@map("login_codes")
+}
+
+model Lesson {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId    String       @map("student_id") @db.Uuid
+  instructorId String       @map("instructor_id") @db.Uuid
+  /// Null for code lessons. Required for driving lessons (checked in constraints.sql).
+  carId        String?      @map("car_id") @db.Uuid
+  kind         LessonKind   @default(driving)
+  status       LessonStatus @default(scheduled)
+  startsAt     DateTime     @map("starts_at") @db.Timestamptz(6)
+  endsAt       DateTime     @map("ends_at") @db.Timestamptz(6)
+  notes        String?
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  instructor Instructor @relation(fields: [instructorId], references: [id])
+  car        Car?       @relation(fields: [carId], references: [id])
+
+  @@index([startsAt])
+  @@map("lessons")
+}
