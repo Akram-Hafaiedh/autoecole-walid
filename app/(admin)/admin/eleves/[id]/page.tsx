@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { updateStudent } from "@/actions/students";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { StatusPill } from "@/components/students/StatusPill";
+import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { StudentForm } from "@/components/students/StudentForm";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isUuid, toDateInput } from "@/lib/students";
+import { formatDate, isUuid, toDateInput, type StudentStatusValue } from "@/lib/students";
 
 export const metadata: Metadata = { title: "Fiche élève" };
 
@@ -18,14 +21,20 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
     if (!student) notFound();
 
     return (
-        <div className="mx-auto max-w-4xl">
-            <h1 className="text-2xl font-semibold tracking-tight">
-                {student.firstName} {student.lastName}
-            </h1>
-            <p className="mt-1 mb-6 text-sm text-muted">
-                Inscrit le {student.createdAt.toISOString().slice(0, 10)}. Pour retirer un élève de la liste,
-                passez son statut à « Archivé ».
-            </p>
+        <>
+            <PageHeader
+                back={{ href: "/admin/eleves", label: "Élèves" }}
+                leading={
+                    <StudentAvatar id={student.id} firstName={student.firstName} lastName={student.lastName} size="lg" />
+                }
+                title={`${student.firstName} ${student.lastName}`}
+                description={
+                    <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <StatusPill status={student.status as StudentStatusValue} />
+                        <span>Inscrit le {formatDate(student.createdAt)}</span>
+                    </span>
+                }
+            />
             <StudentForm
                 action={updateStudent.bind(null, student.id)}
                 submitLabel="Enregistrer"
@@ -41,6 +50,6 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
                     notes: student.notes ?? "",
                 }}
             />
-        </div>
+        </>
     );
 }

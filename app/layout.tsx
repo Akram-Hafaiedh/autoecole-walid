@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Overpass } from "next/font/google";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -10,6 +10,12 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+// Headings, numbers and the wordmark. Overpass is the road-sign typeface family.
+const overpass = Overpass({
+  variable: "--font-overpass",
   subsets: ["latin"],
 });
 
@@ -29,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${overpass.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

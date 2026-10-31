@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createStudent } from "@/actions/students";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { StudentForm } from "@/components/students/StudentForm";
 import { requireAdmin } from "@/lib/auth";
 
@@ -9,8 +10,12 @@ export default async function NewStudentPage() {
     await requireAdmin();
 
     return (
-        <div className="mx-auto max-w-4xl">
-            <h1 className="mb-6 text-2xl font-semibold tracking-tight">Nouvel élève</h1>
+        <>
+            <PageHeader
+                title="Nouvel élève"
+                description="Les champs prénom, nom et catégorie de permis sont obligatoires."
+                back={{ href: "/admin/eleves", label: "Élèves" }}
+            />
             <StudentForm
                 action={createStudent}
                 submitLabel="Ajouter l’élève"
@@ -26,6 +31,6 @@ export default async function NewStudentPage() {
                     notes: "",
                 }}
             />
-        </div>
+        </>
     );
 }

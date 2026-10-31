@@ -153,3 +153,27 @@ export function parseStudentForm(formData: FormData, now: Date = new Date()): Pa
         },
     };
 }
+
+/** "Sami Ben Ali" becomes "SB". Falls back to "?" for empty names. */
+export function initials(firstName: string, lastName: string): string {
+    const first = firstName.trim().charAt(0);
+    const last = lastName.trim().charAt(0);
+    return (first + last).toUpperCase() || "?";
+}
+
+/** A stable number from 0 to count - 1, derived from the id. Used to pick an avatar colour. */
+export function toneIndex(id: string, count: number): number {
+    let sum = 0;
+    for (let i = 0; i < id.length; i++) sum = (sum * 31 + id.charCodeAt(i)) % 100_003;
+    return sum % count;
+}
+
+/** French date, for example "12 septembre 2026" (long) or "12 sept. 2026" (short). */
+export function formatDate(date: Date, style: "long" | "short" = "long"): string {
+    return new Intl.DateTimeFormat("fr-FR", {
+        day: "numeric",
+        month: style === "long" ? "long" : "short",
+        year: "numeric",
+        timeZone: "UTC",
+    }).format(date);
+}

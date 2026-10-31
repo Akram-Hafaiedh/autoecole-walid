@@ -1,44 +1,178 @@
 @import "tailwindcss";
 
+/*
+  Design plan: "road-sign clarity".
+  - Type: Overpass (road-sign family) for headings, numbers and the wordmark; Geist for everything else.
+  - Colour: signal green as the one action colour, a deep asphalt green for the sidebar and brand panels,
+    concrete-grey ground. Status colours follow road-sign meaning: green = go, amber = caution, blue = information.
+  - Signature: the yellow road centre-line, used only in the logo, the active nav marker and the login panel.
+  - Layout: fixed sidebar, content on a flat ground, panels separated by hairlines instead of heavy cards.
+*/
+
 :root {
-  --background: #f7f8f6;
-  --foreground: #15201d;
+  --background: #eceeea;
+  --foreground: #172224;
   --surface: #ffffff;
-  --muted: #5d6b66;
-  --line: #dde3df;
-  --brand: #0b5d4b;
+  --surface-2: #f5f6f3;
+  --muted: #5a696c;
+  --line: #dde2dd;
+  --line-strong: #c4ccc6;
+
+  --brand: #0d7a58;
   --brand-contrast: #ffffff;
-  --accent: #f2b705;
+  --brand-soft: #dcf0e6;
+  --brand-ink: #09573e;
+  --accent: #f4c20d;
+  --danger: #b42318;
+
+  --sidebar: #10261f;
+  --sidebar-ink: #e4efe9;
+  --sidebar-muted: #8fa79d;
+  --sidebar-hover: #1a372e;
+
+  --ok-bg: #dcf0e6;
+  --ok-fg: #09573e;
+  --warn-bg: #fbeecb;
+  --warn-fg: #6e4d00;
+  --info-bg: #dde9f8;
+  --info-fg: #1b4f8f;
+  --neutral-bg: #e6e9e6;
+  --neutral-fg: #4a5659;
+
+  --tone-1-bg: #cfeadc;
+  --tone-1-fg: #0a5a41;
+  --tone-2-bg: #d6e5f7;
+  --tone-2-fg: #1b4f8f;
+  --tone-3-bg: #f8e8bf;
+  --tone-3-fg: #6e4d00;
+  --tone-4-bg: #f6d9dc;
+  --tone-4-fg: #8c2434;
+  --tone-5-bg: #e3dcf6;
+  --tone-5-fg: #4b3a93;
+  --tone-6-bg: #d0eced;
+  --tone-6-fg: #0b5c66;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b1210;
+    --foreground: #e6eeea;
+    --surface: #121b18;
+    --surface-2: #0f1714;
+    --muted: #93a39d;
+    --line: #213029;
+    --line-strong: #30443a;
+
+    --brand: #3dbe97;
+    --brand-contrast: #06201a;
+    --brand-soft: #143429;
+    --brand-ink: #8fe3c5;
+    --accent: #f4c20d;
+    --danger: #f08a80;
+
+    --sidebar: #08110e;
+    --sidebar-ink: #e4efe9;
+    --sidebar-muted: #7f978d;
+    --sidebar-hover: #14271f;
+
+    --ok-bg: #143429;
+    --ok-fg: #8fe3c5;
+    --warn-bg: #3a2f0f;
+    --warn-fg: #f1c964;
+    --info-bg: #15283f;
+    --info-fg: #9cc4f2;
+    --neutral-bg: #1e2926;
+    --neutral-fg: #a4b3ad;
+
+    --tone-1-bg: #17382d;
+    --tone-1-fg: #8fe3c5;
+    --tone-2-bg: #17293f;
+    --tone-2-fg: #9cc4f2;
+    --tone-3-bg: #3a2f0f;
+    --tone-3-fg: #f1c964;
+    --tone-4-bg: #3d1c22;
+    --tone-4-fg: #f2a5ad;
+    --tone-5-bg: #251f42;
+    --tone-5-fg: #beb0f2;
+    --tone-6-bg: #123237;
+    --tone-6-fg: #8fd6de;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-brand: var(--brand);
   --color-brand-contrast: var(--brand-contrast);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
   --color-accent: var(--accent);
+  --color-danger: var(--danger);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-hover: var(--sidebar-hover);
+
+  --color-ok-bg: var(--ok-bg);
+  --color-ok-fg: var(--ok-fg);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-fg: var(--warn-fg);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-neutral-fg: var(--neutral-fg);
+
+  --color-tone-1-bg: var(--tone-1-bg);
+  --color-tone-1-fg: var(--tone-1-fg);
+  --color-tone-2-bg: var(--tone-2-bg);
+  --color-tone-2-fg: var(--tone-2-fg);
+  --color-tone-3-bg: var(--tone-3-bg);
+  --color-tone-3-fg: var(--tone-3-fg);
+  --color-tone-4-bg: var(--tone-4-bg);
+  --color-tone-4-fg: var(--tone-4-fg);
+  --color-tone-5-bg: var(--tone-5-bg);
+  --color-tone-5-fg: var(--tone-5-fg);
+  --color-tone-6-bg: var(--tone-6-bg);
+  --color-tone-6-fg: var(--tone-6-fg);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0e1412;
-    --foreground: #e6eeea;
-    --surface: #151d1a;
-    --muted: #94a39d;
-    --line: #26322e;
-    --brand: #3fb89c;
-    --brand-contrast: #06201a;
-    --accent: #f2b705;
-  }
+  --font-display: var(--font-overpass), var(--font-geist-sans), sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+/* The road centre-line: a vertical run of yellow dashes. */
+.road-line {
+  width: 6px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--accent) 0,
+    var(--accent) 36px,
+    transparent 36px,
+    transparent 72px
+  );
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

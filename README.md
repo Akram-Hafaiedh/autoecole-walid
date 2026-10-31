@@ -17,11 +17,14 @@ actions/
   students.ts           server actions: createStudent, updateStudent
 components/
   auth/LoginForm.tsx    login form (client component)
-  admin/AdminNav.tsx    sidebar links with the active page highlighted
+  admin/AdminNav.tsx    sidebar links with icons and the active page marked
+  admin/PageHeader.tsx  page title, back link and action buttons
+  ui/Icon.tsx, Logo.tsx small stroke icons and the logo mark
+  students/StudentAvatar.tsx, StatusPill.tsx  initials avatar and status pill
   students/StudentForm.tsx  shared create/edit form
 lib/
   site.ts               school name, phone, hours, offers (edit this first)
-  ui.ts                 shared button classes
+  ui.ts                 shared class strings: buttons, input, panel
   prisma.ts             shared Prisma client (import { prisma } from "@/lib/prisma")
   otp.ts                login codes and session tokens (node:crypto only)
   mail.ts               sends the login code by email (Resend)
@@ -35,6 +38,22 @@ prisma/
 prisma.config.ts        Prisma 7 config (reads DATABASE_URL)
 proxy.ts                redirects /admin/* to /connexion when the session cookie is missing or invalid
 ```
+
+## Design
+
+The look is built on road signage. All colours are tokens in `app/globals.css`
+(light and dark); change the brand there, not in individual components.
+
+- **Type:** Overpass (a road-sign typeface, loaded in `app/layout.tsx`) for
+  headings, numbers and the logo; Geist for everything else. Use `font-display`
+  for the first group.
+- **Colour:** signal green for actions, a deep asphalt green for the sidebar
+  and the login panel, a concrete-grey page background. Status colours follow
+  road-sign meaning: green for in progress, amber for on hold, blue for finished.
+- **Signature:** the yellow road centre-line, used only in the logo, the active
+  sidebar marker and the login panel (`.road-line`). Keep it that rare.
+- **Pieces:** `panel`, `input`, `btnPrimary`, `btnSecondary` and `btnGhost` in
+  `lib/ui.ts`; `PageHeader` at the top of every admin page.
 
 ## Before the site goes live
 
