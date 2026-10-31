@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { logout } from "@/actions/auth";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { requireAdmin } from "@/lib/auth";
 import { site } from "@/lib/site";
 
@@ -8,8 +9,6 @@ export const metadata: Metadata = {
     title: "Administration",
     robots: { index: false, follow: false },
 };
-
-const sections = ["Tableau de bord", "Élèves", "Moniteurs", "Véhicules", "Planning"];
 
 export default async function AdminLayout({
     children,
@@ -28,25 +27,7 @@ export default async function AdminLayout({
                     <p className="text-xs text-muted">Administration</p>
                 </div>
                 <ul className="flex gap-1 overflow-x-auto px-4 pb-3 text-sm sm:px-6 md:flex-col md:px-2 md:pb-4">
-                    {sections.map((label, index) => (
-                        <li key={label} className="shrink-0">
-                            {index === 0 ? (
-                                <Link
-                                    href="/admin"
-                                    className="block rounded-md bg-line/60 px-3 py-1.5 font-medium"
-                                >
-                                    {label}
-                                </Link>
-                            ) : (
-                                <span
-                                    className="block cursor-not-allowed rounded-md px-3 py-1.5 text-muted"
-                                    title="Bientôt disponible"
-                                >
-                                    {label}
-                                </span>
-                            )}
-                        </li>
-                    ))}
+                    <AdminNav />
                     <li className="shrink-0 md:mt-4">
                         <form action={logout}>
                             <button

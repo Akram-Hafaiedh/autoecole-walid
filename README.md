@@ -10,12 +10,15 @@ app/
   layout.tsx            root layout (fonts, site metadata, lang="fr")
   globals.css           colour tokens (light + dark) shared by both areas
   (public)/             marketing site: /, /formules, /contact
-  (admin)/admin/        internal tool: /admin (shell only for now)
+  (admin)/admin/        internal tool: dashboard, /admin/eleves (list, new, edit)
   (auth)/connexion/     login page: email code, no password
 actions/
   auth.ts               server actions: requestCode, verifyCode, logout
+  students.ts           server actions: createStudent, updateStudent
 components/
   auth/LoginForm.tsx    login form (client component)
+  admin/AdminNav.tsx    sidebar links with the active page highlighted
+  students/StudentForm.tsx  shared create/edit form
 lib/
   site.ts               school name, phone, hours, offers (edit this first)
   ui.ts                 shared button classes
@@ -23,10 +26,14 @@ lib/
   otp.ts                login codes and session tokens (node:crypto only)
   mail.ts               sends the login code by email (Resend)
   auth.ts               requireAdmin(), session cookie helpers
+  students.ts           student form validation and labels (no imports, testable)
 prisma/
   schema.prisma         data model (students, instructors, cars, lessons)
   constraints.sql       double-booking rules Prisma cannot express
+  seed-data.ts          fake students for trying the screens (pure data)
+  seed.ts               loads them into the database: npm run db:seed
 prisma.config.ts        Prisma 7 config (reads DATABASE_URL)
+proxy.ts                redirects /admin/* to /connexion when the session cookie is missing or invalid
 ```
 
 ## Before the site goes live
@@ -101,10 +108,41 @@ the email of your own Resend account.
 Every admin page, layout and server action must call `await requireAdmin()`
 from `lib/auth.ts`. Do not rely on the layout alone.
 
+`proxy.ts` adds a quick cookie check in front of `/admin/*`. It is a safety net
+against a forgotten `requireAdmin()`, not a replacement for it.
+
+## Students
+
+`/admin/eleves` lists students 15 per page (search by name or phone, filter by
+status; archived students are hidden by default; search and filter are kept when
+you change page). `/admin/eleves/nouveau` creates one
+and `/admin/eleves/<id>` edits one. Students are never deleted, because lessons
+refer to them: set the status to "Archivé" instead. The national ID is only
+loaded on the edit page, never in the list.
+
+### Fake data
+
+To try the list, search, filters and pagination with something on screen:
+
+```bash
+npm run db:seed
+```
+
+This creates 46 invented students (32 active, 6 paused, 5 completed, 3
+archived; every name, phone and email is made up). Each has a national ID
+starting with `SEED-`. Running it again replaces them, and real students are
+never touched. To remove them by hand:
+
+```sql
+DELETE FROM students WHERE national_id LIKE 'SEED-%';
+```
+
+Do not run it against the production database.
+
 ## Not built yet
 
 - Roles beyond the single owner (for example instructors with their own login).
-- Database connection and the student, instructor, car and lesson screens.
+- Instructor, car and lesson screens (the planning with double-booking checks).
 - Payments and SMS/WhatsApp reminders.
 
 ## Notes

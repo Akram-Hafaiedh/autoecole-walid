@@ -15,6 +15,8 @@ export const RESEND_COOLDOWN_MS = 60 * 1000;
 export const MAX_ATTEMPTS = 5;
 export const MAX_CODES_PER_HOUR = 5;
 export const SESSION_TTL_S = 7 * 24 * 60 * 60;
+/** Name of the session cookie. Shared by lib/auth.ts and proxy.ts. */
+export const SESSION_COOKIE = "admin_session";
 
 function secret(): string {
     const value = process.env.SESSION_SECRET;

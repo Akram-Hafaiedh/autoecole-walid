@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createSessionToken, isValidSessionToken, SESSION_TTL_S } from "./otp";
+import { createSessionToken, isValidSessionToken, SESSION_COOKIE, SESSION_TTL_S } from "./otp";
 
-const COOKIE = "admin_session";
+const COOKIE = SESSION_COOKIE;
 
 export async function isAdmin(): Promise<boolean> {
     const store = await cookies();
