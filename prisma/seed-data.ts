@@ -102,3 +102,58 @@ export function buildSeedStudents(count = 46, now: Date = new Date()): SeedStude
 
     return students;
 }
+
+// ---------------------------------------------------------------------------
+// Demo instructors and cars. Same idea as the students: invented data you can wipe.
+//   Instructors: email ends with "@seed.invalid".
+//   Cars: notes start with "[démo]".
+
+export const SEED_INSTRUCTOR_DOMAIN = "@seed.invalid";
+export const SEED_CAR_MARK = "[démo]";
+
+export type SeedInstructor = {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    active: boolean;
+};
+
+export function buildSeedInstructors(): SeedInstructor[] {
+    const people = [
+        { firstName: "Walid", lastName: "Ben Amor", active: true },
+        { firstName: "Slim", lastName: "Gharbi", active: true },
+        { firstName: "Nadia", lastName: "Hamdi", active: true },
+        { firstName: "Moez", lastName: "Jebali", active: false },
+    ];
+    return people.map((person, i) => ({
+        ...person,
+        phone: `+216 9${i} 000 20${i}`,
+        email: `${slug(person.firstName)}.${slug(person.lastName)}${SEED_INSTRUCTOR_DOMAIN}`,
+    }));
+}
+
+export type SeedCar = {
+    label: string;
+    plate: string;
+    transmission: "manual" | "automatic";
+    active: boolean;
+    nextServiceDate: Date | null;
+    notes: string;
+};
+
+export function buildSeedCars(now: Date = new Date()): SeedCar[] {
+    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const inDays = (days: number) => new Date(today + days * 86_400_000);
+
+    // One overdue, one due soon, the rest far away, one not planned, one out of service,
+    // so every state of the service badge shows up.
+    return [
+        { label: "Clio blanche", plate: "214 TUN 8841", transmission: "manual", active: true, nextServiceDate: inDays(-12) },
+        { label: "Peugeot 208 grise", plate: "198 TUN 5527", transmission: "manual", active: true, nextServiceDate: inDays(9) },
+        { label: "Dacia Sandero rouge", plate: "231 TUN 1093", transmission: "manual", active: true, nextServiceDate: inDays(74) },
+        { label: "Kia Picanto bleue", plate: "205 TUN 7710", transmission: "automatic", active: true, nextServiceDate: inDays(140) },
+        { label: "Hyundai i10 blanche", plate: "187 TUN 3368", transmission: "manual", active: true, nextServiceDate: null },
+        { label: "Renault Symbol noire", plate: "142 TUN 9004", transmission: "manual", active: false, nextServiceDate: inDays(-40) },
+    ].map((car) => ({ ...car, transmission: car.transmission as "manual" | "automatic", notes: `${SEED_CAR_MARK} Véhicule de démonstration.` }));
+}

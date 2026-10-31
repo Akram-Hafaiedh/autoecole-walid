@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isUuid, parseStudentForm, type StudentFormState } from "@/lib/students";
+import { isUuid } from "@/lib/format";
+import { parseStudentForm, type StudentFormState } from "@/lib/students";
 
 export async function createStudent(
     _previous: StudentFormState,

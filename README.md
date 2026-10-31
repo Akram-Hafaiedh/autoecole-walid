@@ -10,18 +10,22 @@ app/
   layout.tsx            root layout (fonts, site metadata, lang="fr")
   globals.css           colour tokens (light + dark) shared by both areas
   (public)/             marketing site: /, /formules, /contact
-  (admin)/admin/        internal tool: dashboard, /admin/eleves (list, new, edit)
+  (admin)/admin/        internal tool: dashboard, eleves, moniteurs, vehicules (each: list, new, edit)
   (auth)/connexion/     login page: email code, no password
 actions/
   auth.ts               server actions: requestCode, verifyCode, logout
   students.ts           server actions: createStudent, updateStudent
+  instructors.ts        server actions: createInstructor, updateInstructor
+  cars.ts               server actions: createCar, updateCar (plate must be unique)
 components/
   auth/LoginForm.tsx    login form (client component)
   admin/AdminNav.tsx    sidebar links with icons and the active page marked
   admin/PageHeader.tsx  page title, back link and action buttons
-  ui/Icon.tsx, Logo.tsx small stroke icons and the logo mark
-  students/StudentAvatar.tsx, StatusPill.tsx  initials avatar and status pill
-  students/StudentForm.tsx  shared create/edit form
+  ui/                   Icon, Logo, Avatar, Pill, EmptyState, FormParts (Section, Field,
+                        FormError), useFormFields (shared form plumbing)
+  students/             StudentForm, StatusPill
+  instructors/          InstructorForm
+  cars/                 CarForm, PlateChip, ServicePill
 lib/
   site.ts               school name, phone, hours, offers (edit this first)
   ui.ts                 shared class strings: buttons, input, panel
@@ -29,11 +33,17 @@ lib/
   otp.ts                login codes and session tokens (node:crypto only)
   mail.ts               sends the login code by email (Resend)
   auth.ts               requireAdmin(), session cookie helpers
-  students.ts           student form validation and labels (no imports, testable)
+  students.ts           student form validation and labels
+  instructors.ts        instructor form validation
+  cars.ts               car form validation and the service-date logic
+  format.ts             isUuid, initials, formatDate and other small helpers
+  form.ts               FormState type and readFields for the forms
+  validation.ts         phone, email and date checks shared by the forms
+  db-errors.ts          isUniqueViolation (Prisma P2002)
 prisma/
   schema.prisma         data model (students, instructors, cars, lessons)
   constraints.sql       double-booking rules Prisma cannot express
-  seed-data.ts          fake students for trying the screens (pure data)
+  seed-data.ts          fake students, instructors and cars (pure data)
   seed.ts               loads them into the database: npm run db:seed
 prisma.config.ts        Prisma 7 config (reads DATABASE_URL)
 proxy.ts                redirects /admin/* to /connexion when the session cookie is missing or invalid
@@ -54,6 +64,18 @@ The look is built on road signage. All colours are tokens in `app/globals.css`
   sidebar marker and the login panel (`.road-line`). Keep it that rare.
 - **Pieces:** `panel`, `input`, `btnPrimary`, `btnSecondary` and `btnGhost` in
   `lib/ui.ts`; `PageHeader` at the top of every admin page.
+
+## Instructors and cars
+
+`/admin/moniteurs` and `/admin/vehicules` show one card per person or car, with
+the number of upcoming lessons (0 until the planning exists). Nothing is deleted,
+because lessons refer to both: set a moniteur to "Inactif" or a car to
+"Hors service" and it stops being offered in the planning, while its history stays.
+
+A car's plate must be unique (spaces and case are ignored: `214  tun 8841` is
+`214 TUN 8841`). Each car has a "prochain entretien" date. The dashboard lists
+cars whose service is overdue or due within 30 days (`SERVICE_SOON_DAYS` in
+`lib/cars.ts`).
 
 ## Before the site goes live
 
@@ -156,12 +178,21 @@ never touched. To remove them by hand:
 DELETE FROM students WHERE national_id LIKE 'SEED-%';
 ```
 
+The seed also creates 4 instructors (email ending `@seed.invalid`) and 6 cars
+(notes starting `[démo]`), covering every service state. A demo instructor or car
+that already has lessons is kept when you re-run it. To remove them by hand:
+
+```sql
+DELETE FROM instructors WHERE email LIKE '%@seed.invalid';
+DELETE FROM cars WHERE notes LIKE '[démo]%';
+```
+
 Do not run it against the production database.
 
 ## Not built yet
 
 - Roles beyond the single owner (for example instructors with their own login).
-- Instructor, car and lesson screens (the planning with double-booking checks).
+- The planning: lesson screens with the double-booking checks (instructors and cars exist now).
 - Payments and SMS/WhatsApp reminders.
 
 ## Notes

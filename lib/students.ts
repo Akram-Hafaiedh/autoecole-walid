@@ -1,5 +1,8 @@
-// Student form validation and labels. No imports, so it runs on the server and in the
-// browser, and can be tested on its own.
+// Student form validation and labels. Only imports other pure helpers, so it runs on the
+// server and in the browser, and can be tested on its own.
+
+import type { FormState } from "@/lib/form";
+import { isEmail, isPhone, parseDateOnly } from "@/lib/validation";
 
 export const STUDENT_STATUSES = ["active", "paused", "completed", "archived"] as const;
 export type StudentStatusValue = (typeof STUDENT_STATUSES)[number];
@@ -40,12 +43,7 @@ export type StudentField =
     | "status"
     | "notes";
 
-export type StudentFormState = {
-    errors?: Partial<Record<StudentField, string>>;
-    message?: string;
-    /** What the user typed, so a failed submit does not wipe the form. */
-    values?: Partial<Record<StudentField, string>>;
-};
+export type StudentFormState = FormState<StudentField>;
 
 export type StudentInput = {
     firstName: string;
@@ -75,16 +73,6 @@ const FIELDS: StudentField[] = [
     "notes",
 ];
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export function isUuid(value: string): boolean {
-    return UUID.test(value);
-}
-
-export function toDateInput(date: Date | null): string {
-    return date ? date.toISOString().slice(0, 10) : "";
-}
-
 export function parseStudentForm(formData: FormData, now: Date = new Date()): ParseResult {
     const values: Partial<Record<StudentField, string>> = {};
     for (const field of FIELDS) {
@@ -99,22 +87,18 @@ export function parseStudentForm(formData: FormData, now: Date = new Date()): Pa
     if (!v.lastName) errors.lastName = "Le nom est obligatoire.";
     else if (v.lastName.length > 80) errors.lastName = "80 caractères au maximum.";
 
-    if (v.phone && !/^[0-9+()\s.-]{6,20}$/.test(v.phone)) {
+    if (v.phone && !isPhone(v.phone)) {
         errors.phone = "Numéro invalide (6 à 20 chiffres, espaces ou +).";
     }
 
-    if (v.email && (v.email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email))) {
+    if (v.email && !isEmail(v.email)) {
         errors.email = "Adresse e-mail invalide.";
     }
 
     let birthDate: Date | null = null;
     if (v.birthDate) {
-        const parsed = /^\d{4}-\d{2}-\d{2}$/.test(v.birthDate) ? new Date(v.birthDate) : null;
-        if (
-            !parsed ||
-            Number.isNaN(parsed.getTime()) ||
-            parsed.toISOString().slice(0, 10) !== v.birthDate
-        ) {
+        const parsed = parseDateOnly(v.birthDate);
+        if (!parsed) {
             errors.birthDate = "Date invalide.";
         } else if (parsed.getUTCFullYear() < 1900 || parsed.getTime() > now.getTime()) {
             errors.birthDate = "Date de naissance impossible.";
@@ -152,28 +136,4 @@ export function parseStudentForm(formData: FormData, now: Date = new Date()): Pa
             notes: v.notes || null,
         },
     };
-}
-
-/** "Sami Ben Ali" becomes "SB". Falls back to "?" for empty names. */
-export function initials(firstName: string, lastName: string): string {
-    const first = firstName.trim().charAt(0);
-    const last = lastName.trim().charAt(0);
-    return (first + last).toUpperCase() || "?";
-}
-
-/** A stable number from 0 to count - 1, derived from the id. Used to pick an avatar colour. */
-export function toneIndex(id: string, count: number): number {
-    let sum = 0;
-    for (let i = 0; i < id.length; i++) sum = (sum * 31 + id.charCodeAt(i)) % 100_003;
-    return sum % count;
-}
-
-/** French date, for example "12 septembre 2026" (long) or "12 sept. 2026" (short). */
-export function formatDate(date: Date, style: "long" | "short" = "long"): string {
-    return new Intl.DateTimeFormat("fr-FR", {
-        day: "numeric",
-        month: style === "long" ? "long" : "short",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(date);
 }

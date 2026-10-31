@@ -1,4 +1,4 @@
-import { initials, toneIndex } from "@/lib/students";
+import { initials, toneIndex } from "@/lib/format";
 
 // Spelled out in full so Tailwind can see every class name.
 const tones = [
@@ -22,8 +22,8 @@ type Props = {
     size?: keyof typeof sizes;
 };
 
-/** Initials on a soft colour. The colour is picked from the id, so it stays the same for a student. */
-export function StudentAvatar({ id, firstName, lastName, size = "sm" }: Props) {
+/** Initials on a soft colour. The colour is picked from the id, so a person keeps the same one. */
+export function Avatar({ id, firstName, lastName, size = "sm" }: Props) {
     return (
         <span
             aria-hidden="true"

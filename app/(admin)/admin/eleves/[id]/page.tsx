@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { updateStudent } from "@/actions/students";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { StatusPill } from "@/components/students/StatusPill";
-import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { StudentForm } from "@/components/students/StudentForm";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDate, isUuid, toDateInput, type StudentStatusValue } from "@/lib/students";
+import { formatDate, isUuid, toDateInput } from "@/lib/format";
+import type { StudentStatusValue } from "@/lib/students";
 
 export const metadata: Metadata = { title: "Fiche élève" };
 
@@ -25,7 +26,7 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
             <PageHeader
                 back={{ href: "/admin/eleves", label: "Élèves" }}
                 leading={
-                    <StudentAvatar id={student.id} firstName={student.firstName} lastName={student.lastName} size="lg" />
+                    <Avatar id={student.id} firstName={student.firstName} lastName={student.lastName} size="lg" />
                 }
                 title={`${student.firstName} ${student.lastName}`}
                 description={

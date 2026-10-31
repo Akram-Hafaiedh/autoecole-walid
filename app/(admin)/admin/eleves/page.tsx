@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { StatusPill } from "@/components/students/StatusPill";
-import { StudentAvatar } from "@/components/students/StudentAvatar";
+import { Avatar } from "@/components/ui/Avatar";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { requireAdmin } from "@/lib/auth";
+import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import {
     PAGE_SIZE,
     STATUS_LABELS,
     STUDENT_STATUSES,
-    formatDate,
     parsePage,
     studentsHref,
     type StudentStatusValue,
@@ -117,10 +118,11 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                                     <Link
                                         href={studentsHref({ q: search, statut: tab.value })}
                                         aria-current={active ? "page" : undefined}
-                                        className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-brand ${active
+                                        className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-brand ${
+                                            active
                                                 ? "bg-brand-soft text-brand-ink"
                                                 : "text-muted hover:bg-line/60 hover:text-foreground"
-                                            }`}
+                                        }`}
                                     >
                                         {tab.label}
                                         <span className="text-xs tabular-nums opacity-70">{tab.count}</span>
@@ -158,21 +160,20 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
 
             <section className={`${panel} overflow-hidden`}>
                 {students.length === 0 ? (
-                    <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-                        <span className="inline-flex size-11 items-center justify-center rounded-full bg-surface-2 text-muted">
-                            <Icon name="users" className="size-6" />
-                        </span>
-                        <p className="max-w-sm text-sm text-muted">
-                            {search || filter
-                                ? "Aucun élève ne correspond à cette recherche."
-                                : "Aucun élève pour l’instant. Ajoutez le premier avec « Nouvel élève »."}
-                        </p>
-                        {(search || filter) && (
-                            <Link href="/admin/eleves" className={btnSecondary}>
-                                Effacer les filtres
-                            </Link>
-                        )}
-                    </div>
+                    <EmptyState
+                        icon="users"
+                        action={
+                            search || filter ? (
+                                <Link href="/admin/eleves" className={btnSecondary}>
+                                    Effacer les filtres
+                                </Link>
+                            ) : undefined
+                        }
+                    >
+                        {search || filter
+                            ? "Aucun élève ne correspond à cette recherche."
+                            : "Aucun élève pour l’instant. Ajoutez le premier avec « Nouvel élève »."}
+                    </EmptyState>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
@@ -200,7 +201,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Sea
                                     <tr key={student.id} className="relative transition-colors hover:bg-surface-2">
                                         <td className="px-5 py-3">
                                             <div className="flex items-center gap-3">
-                                                <StudentAvatar
+                                                <Avatar
                                                     id={student.id}
                                                     firstName={student.firstName}
                                                     lastName={student.lastName}
