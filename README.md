@@ -10,13 +10,14 @@ app/
   layout.tsx            root layout (fonts, site metadata, lang="fr")
   globals.css           colour tokens (light + dark) shared by both areas
   (public)/             marketing site: /, /formules, /contact
-  (admin)/admin/        internal tool: dashboard, eleves, moniteurs, vehicules (each: list, new, edit)
+  (admin)/admin/        internal tool: dashboard, eleves, moniteurs, vehicules, planning
   (auth)/connexion/     login page: email code, no password
 actions/
   auth.ts               server actions: requestCode, verifyCode, logout
   students.ts           server actions: createStudent, updateStudent
   instructors.ts        server actions: createInstructor, updateInstructor
   cars.ts               server actions: createCar, updateCar (plate must be unique)
+  lessons.ts            server actions: createLesson, updateLesson (double-booking messages)
 components/
   auth/LoginForm.tsx    login form (client component)
   admin/AdminNav.tsx    sidebar links with icons and the active page marked
@@ -26,6 +27,7 @@ components/
   students/             StudentForm, StatusPill
   instructors/          InstructorForm
   cars/                 CarForm, PlateChip, ServicePill
+  planning/             PlanningGrid (week and day), DayAgenda (phone), LessonForm
 lib/
   site.ts               school name, phone, hours, offers (edit this first)
   ui.ts                 shared class strings: buttons, input, panel
@@ -39,11 +41,14 @@ lib/
   format.ts             isUuid, initials, formatDate and other small helpers
   form.ts               FormState type and readFields for the forms
   validation.ts         phone, email and date checks shared by the forms
-  db-errors.ts          isUniqueViolation (Prisma P2002)
+  db-errors.ts          isUniqueViolation (P2002), isForeignKeyViolation (P2003)
+  time.ts               dates and times on the school's clock (Africa/Tunis)
+  lessons.ts            lesson form validation, durations, conflict messages
+  planning.ts           grid layout: side-by-side lanes, visible hours, URLs
 prisma/
   schema.prisma         data model (students, instructors, cars, lessons)
   constraints.sql       double-booking rules Prisma cannot express
-  seed-data.ts          fake students, instructors and cars (pure data)
+  seed-data.ts          fake students, instructors, cars and lessons (pure data)
   seed.ts               loads them into the database: npm run db:seed
 prisma.config.ts        Prisma 7 config (reads DATABASE_URL)
 proxy.ts                redirects /admin/* to /connexion when the session cookie is missing or invalid
@@ -76,6 +81,29 @@ A car's plate must be unique (spaces and case are ignored: `214  tun 8841` is
 `214 TUN 8841`). Each car has a "prochain entretien" date. The dashboard lists
 cars whose service is overdue or due within 30 days (`SERVICE_SOON_DAYS` in
 `lib/cars.ts`).
+
+## Planning
+
+`/admin/planning` has two views. **Semaine** shows the seven days, Monday to Sunday.
+**Jour** shows one day with a column per instructor, which is the easiest way to see
+who does what. The chips filter by instructor, the menu by car, and "Annulées"
+shows cancelled lessons too. On a phone the grid becomes a list of days.
+
+A lesson has no fixed slot. It starts at any time and lasts anything from 15 minutes
+to 12 hours (quick buttons for 1 h, 1 h 30, 2 h, 3 h, 4 h and 8 h, or type the
+minutes). It must end before midnight. The grid starts at 06:00 and ends at 21:00,
+and grows by itself when a lesson falls outside (`DEFAULT_START_HOUR` and
+`DEFAULT_END_HOUR` in `lib/planning.ts`).
+
+Times are shown on the school's clock, `timeZone` in `lib/site.ts` (Africa/Tunis),
+whatever the server or the browser uses.
+
+When a lesson would overlap another one for the same instructor, car or student,
+the form says which one is busy and from when to when. The database enforces the
+same rule (`prisma/constraints.sql`), so two people saving at the same moment cannot
+both get through. A cancelled lesson frees its slot. A code lesson never has a car,
+a driving lesson always has one, an exam may have one. Lessons are cancelled, not
+deleted: set the status to "Annulée".
 
 ## Before the site goes live
 
@@ -178,7 +206,16 @@ never touched. To remove them by hand:
 DELETE FROM students WHERE national_id LIKE 'SEED-%';
 ```
 
-The seed also creates 4 instructors (email ending `@seed.invalid`) and 6 cars
+The seed also creates 102 demo lessons over this week and next (1 h to 8 h,
+starting as early as 06:00, code lessons, back-to-back lessons, weekends included,
+past ones marked done, absent or cancelled), with notes starting `[démo]`. Running it
+again replaces them. To remove them by hand:
+
+```sql
+DELETE FROM lessons WHERE notes LIKE '[démo]%';
+```
+
+It also creates 4 instructors (email ending `@seed.invalid`) and 6 cars
 (notes starting `[démo]`), covering every service state. A demo instructor or car
 that already has lessons is kept when you re-run it. To remove them by hand:
 
@@ -192,8 +229,9 @@ Do not run it against the production database.
 ## Not built yet
 
 - Roles beyond the single owner (for example instructors with their own login).
-- The planning: lesson screens with the double-booking checks (instructors and cars exist now).
-- Payments and SMS/WhatsApp reminders.
+- The lesson history on each student's page.
+- Payments, per session or per hour (both are planned).
+- SMS/WhatsApp reminders.
 
 ## Notes
 

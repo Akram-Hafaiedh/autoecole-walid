@@ -12,3 +12,6 @@ export const input =
 
 /** A white surface with a hairline border. Use for the main content blocks of a page. */
 export const panel = "rounded-2xl border border-line bg-surface";
+
+/** Same look as `input`, but only as wide as its content (for filters in a row). */
+export const inputInline = input.replace("w-full ", "");

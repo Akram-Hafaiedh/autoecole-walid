@@ -5,6 +5,8 @@
 // seed.ts finds and replaces them on a re-run, and how you can remove them by hand:
 //   DELETE FROM students WHERE national_id LIKE 'SEED-%';
 
+import { addDays, utcToZoned, weekStart, weekdayOf, zonedTimeToUtc } from "../lib/time";
+
 export const SEED_PREFIX = "SEED-";
 
 const FIRST_NAMES = [
@@ -157,3 +159,87 @@ export function buildSeedCars(now: Date = new Date()): SeedCar[] {
         { label: "Renault Symbol noire", plate: "142 TUN 9004", transmission: "manual", active: false, nextServiceDate: inDays(-40) },
     ].map((car) => ({ ...car, transmission: car.transmission as "manual" | "automatic", notes: `${SEED_CAR_MARK} Véhicule de démonstration.` }));
 }
+
+// ---------------------------------------------------------------------------
+// Demo lessons: this week and next, so the planning has something to show.
+// Notes start with "[démo]" so seed.ts can find and replace them on a re-run.
+
+export const SEED_LESSON_MARK = "[démo]";
+
+export type SeedLesson = {
+    studentId: string;
+    instructorId: string;
+    carId: string | null;
+    kind: "driving" | "code";
+    status: "scheduled" | "completed" | "cancelled" | "no_show";
+    startsAt: Date;
+    endsAt: Date;
+    notes: string;
+};
+
+type Slot = readonly [start: string, minutes: number, kind: "driving" | "code"];
+
+// A day for one instructor: start time, length in minutes, type. Short and long lessons,
+// early starts, an evening, back-to-back lessons and a full 8-hour day all appear.
+const DAYS: Record<string, readonly Slot[]> = {
+    regular: [["08:00", 120, "driving"], ["10:30", 60, "driving"], ["14:00", 180, "driving"]],
+    early: [["06:00", 120, "driving"], ["09:00", 120, "code"], ["16:00", 240, "driving"]],
+    long: [["09:00", 480, "driving"]],
+    short: [["08:00", 60, "driving"], ["09:00", 60, "driving"], ["10:00", 60, "driving"], ["18:00", 120, "driving"]],
+    off: [],
+};
+
+// Monday to Sunday. The weekend is the busiest part of the week.
+const WEEK: readonly (keyof typeof DAYS)[] = ["regular", "off", "short", "regular", "early", "long", "early"];
+
+export function buildSeedLessons(input: {
+    students: { id: string; status: string }[];
+    instructors: { id: string }[];
+    cars: { id: string }[];
+    now: Date;
+    timeZone: string;
+}): SeedLesson[] {
+    const { now, timeZone } = input;
+    const students = input.students.filter((student) => student.status !== "archived");
+    const team = input.instructors.slice(0, 3);
+    if (students.length === 0 || team.length === 0) return [];
+
+    const today = utcToZoned(now, timeZone).date;
+    const start = weekStart(today);
+    const lessons: SeedLesson[] = [];
+    let turn = 0;
+
+    for (let offset = 0; offset < 14; offset++) {
+        const date = addDays(start, offset);
+        team.forEach((instructor, index) => {
+            // Each instructor drives their own car, so no two lessons share one.
+            const car = input.cars[index] ?? input.cars[0] ?? null;
+            const plan = DAYS[WEEK[(weekdayOf(date) + index) % 7]];
+            for (const [time, minutes, kind] of plan) {
+                const startsAt = zonedTimeToUtc(date, time, timeZone);
+                const endsAt = new Date(startsAt.getTime() + minutes * 60_000);
+                const n = turn++;
+
+                let status: SeedLesson["status"] = "scheduled";
+                if (endsAt.getTime() < now.getTime()) status = n % 11 === 7 ? "no_show" : n % 7 === 3 ? "cancelled" : "completed";
+                else if (n % 17 === 5) status = "cancelled";
+
+                const needsCar = kind === "driving";
+                if (needsCar && !car) continue;
+
+                lessons.push({
+                    studentId: students[n % students.length].id,
+                    instructorId: instructor.id,
+                    carId: needsCar ? car!.id : null,
+                    kind,
+                    status,
+                    startsAt,
+                    endsAt,
+                    notes: `${SEED_LESSON_MARK} Leçon de démonstration.`,
+                });
+            }
+        });
+    }
+    return lessons;
+}
+

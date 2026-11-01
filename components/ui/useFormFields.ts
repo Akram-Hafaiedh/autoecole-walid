@@ -13,11 +13,12 @@ export function useFormFields<Field extends string>(
     const [state, formAction, pending] = useActionState(action, {} as FormState<Field>);
     const error = (field: Field) => state.errors?.[field];
 
-    const props = (name: Field) => ({
+    // controlled: true for inputs the form keeps in its own state (no defaultValue).
+    const props = (name: Field, controlled = false) => ({
         id: name,
         name,
         // After a failed submit, show what the user typed rather than the saved value.
-        defaultValue: state.values?.[name] ?? initial[name],
+        ...(controlled ? {} : { defaultValue: state.values?.[name] ?? initial[name] }),
         className: `${input} aria-invalid:border-danger`,
         "aria-invalid": error(name) ? true : undefined,
         "aria-describedby": error(name) ? `${name}-error` : undefined,

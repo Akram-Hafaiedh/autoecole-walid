@@ -7,6 +7,8 @@ export const site = {
   description:
     "Auto-école : préparation au code de la route et leçons de conduite avec un moniteur dédié.",
   currency: "DT", // TODO confirm the currency shown on prices
+  // Lesson times are shown on this clock, whatever the server or the browser uses.
+  timeZone: "Africa/Tunis",
   phone: {
     display: "+216 00 000 000", // TODO real number
     tel: "+21600000000", // TODO same number, no spaces

@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { ServicePill } from "@/components/cars/ServicePill";
+import { kindStyles } from "@/components/planning/lessonStyles";
 import { StatusPill, STATUS_DOT } from "@/components/students/StatusPill";
 import { Avatar } from "@/components/ui/Avatar";
 import { Icon } from "@/components/ui/Icon";
 import { requireAdmin } from "@/lib/auth";
 import { SERVICE_SOON_DAYS, serviceState } from "@/lib/cars";
 import { formatDate } from "@/lib/format";
+import { KIND_LABELS, type LessonKindValue } from "@/lib/lessons";
 import { prisma } from "@/lib/prisma";
+import { site } from "@/lib/site";
+import { formatRange, relativeDay, utcToZoned } from "@/lib/time";
 import { STATUS_LABELS, STUDENT_STATUSES, type StudentStatusValue } from "@/lib/students";
 import { btnPrimary, panel } from "@/lib/ui";
 
@@ -27,7 +31,7 @@ export default async function AdminHomePage() {
     const serviceLimit = new Date();
     serviceLimit.setDate(serviceLimit.getDate() + SERVICE_SOON_DAYS);
 
-    const [grouped, newThisMonth, recent, instructorCount, carCount, carsToService] = await Promise.all([
+    const [grouped, newThisMonth, recent, instructorCount, carCount, carsToService, nextLessons] = await Promise.all([
         prisma.student.groupBy({ by: ["status"], _count: { _all: true } }),
         prisma.student.count({ where: { createdAt: { gte: monthStart }, status: { not: "archived" } } }),
         prisma.student.findMany({
@@ -53,7 +57,22 @@ export default async function AdminHomePage() {
             take: 4,
             select: { id: true, label: true, nextServiceDate: true },
         }),
+        prisma.lesson.findMany({
+            where: { startsAt: { gte: new Date() }, status: "scheduled" },
+            orderBy: { startsAt: "asc" },
+            take: 5,
+            select: {
+                id: true,
+                kind: true,
+                startsAt: true,
+                endsAt: true,
+                student: { select: { firstName: true, lastName: true } },
+                instructor: { select: { firstName: true, lastName: true } },
+                car: { select: { label: true } },
+            },
+        }),
     ]);
+    const todayAtSchool = utcToZoned(new Date(), site.timeZone).date;
 
     const counts = Object.fromEntries(STUDENT_STATUSES.map((status) => [status, 0])) as Record<
         StudentStatusValue,
@@ -155,17 +174,61 @@ export default async function AdminHomePage() {
                         )}
                     </section>
 
-                    <section className={`${panel} p-5`}>
-                        <h2 className="font-display text-lg font-semibold">Prochaines leçons</h2>
-                        <div className="mt-4 flex items-start gap-3 rounded-xl bg-surface-2 p-4">
-                            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
-                                <Icon name="calendar" className="size-5" />
-                            </span>
-                            <p className="text-sm text-muted">
-                                Le planning n’est pas encore disponible. Les leçons de la semaine s’afficheront ici avec
-                                leur moniteur et leur véhicule.
-                            </p>
+                    <section className={`${panel} min-w-0`}>
+                        <div className="flex items-center justify-between gap-4 px-5 pt-5 pb-3">
+                            <h2 className="font-display text-lg font-semibold">Prochaines leçons</h2>
+                            <Link href="/admin/planning" className="text-sm font-medium text-brand hover:underline">
+                                Voir le planning
+                            </Link>
                         </div>
+
+                        {nextLessons.length === 0 ? (
+                            <div className="mx-5 mb-5 flex items-start gap-3 rounded-xl bg-surface-2 p-4">
+                                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
+                                    <Icon name="calendar" className="size-5" />
+                                </span>
+                                <p className="text-sm text-muted">
+                                    Aucune leçon à venir. Planifiez la première avec « Nouvelle leçon » dans le planning.
+                                </p>
+                            </div>
+                        ) : (
+                            <ul className="divide-y divide-line">
+                                {nextLessons.map((lesson) => {
+                                    const begin = utcToZoned(lesson.startsAt, site.timeZone);
+                                    const length = Math.round((lesson.endsAt.getTime() - lesson.startsAt.getTime()) / 60_000);
+                                    return (
+                                        <li key={lesson.id}>
+                                            <Link
+                                                href={`/admin/planning/${lesson.id}`}
+                                                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-2"
+                                            >
+                                                <span
+                                                    aria-hidden="true"
+                                                    className={`h-10 w-1.5 shrink-0 rounded-full ${kindStyles[lesson.kind as LessonKindValue].dot}`}
+                                                />
+                                                <span className="w-28 shrink-0 sm:w-32">
+                                                    <span className="block text-sm font-medium capitalize">
+                                                        {relativeDay(begin.date, todayAtSchool)}
+                                                    </span>
+                                                    <span className="block text-xs text-muted tabular-nums">
+                                                        {formatRange(begin.minutes, begin.minutes + length)}
+                                                    </span>
+                                                </span>
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block truncate text-sm font-medium">
+                                                        {lesson.student.firstName} {lesson.student.lastName}
+                                                    </span>
+                                                    <span className="block truncate text-xs text-muted">
+                                                        {KIND_LABELS[lesson.kind as LessonKindValue]} · {lesson.instructor.firstName}
+                                                        {lesson.car ? ` · ${lesson.car.label}` : ""}
+                                                    </span>
+                                                </span>
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
                     </section>
                 </div>
 
