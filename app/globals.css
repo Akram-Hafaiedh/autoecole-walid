@@ -5,7 +5,7 @@
   - Type: Overpass (road-sign family) for headings, numbers and the wordmark; Geist for everything else.
   - Colour: signal green as the one action colour, a deep asphalt green for the sidebar and brand panels,
     concrete-grey ground. Status colours follow road-sign meaning: green = go, amber = caution, blue = information.
-  - Signature: the yellow road centre-line, used only in the logo, the active nav marker and the login panel.
+  - Signature: the yellow road centre-line, used only in the logo, the active nav marker, the login panel and the public hero.
   - Layout: fixed sidebar, content on a flat ground, panels separated by hairlines instead of heavy cards.
 */
 
@@ -162,6 +162,19 @@ body {
   width: 6px;
   background: repeating-linear-gradient(
     to bottom,
+    var(--accent) 0,
+    var(--accent) 36px,
+    transparent 36px,
+    transparent 72px
+  );
+  border-radius: 3px;
+}
+
+/* The same line, lying down: a run of yellow dashes along the bottom of a panel. */
+.road-line-x {
+  height: 6px;
+  background: repeating-linear-gradient(
+    to right,
     var(--accent) 0,
     var(--accent) 36px,
     transparent 36px,

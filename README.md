@@ -28,6 +28,7 @@ components/
   instructors/          InstructorForm
   cars/                 CarForm, PlateChip, ServicePill
   planning/             PlanningGrid (week and day), DayAgenda (phone), LessonForm
+  public/               PublicNav, PageIntro, OfferCard (public site)
 lib/
   site.ts               school name, phone, hours, offers (edit this first)
   ui.ts                 shared class strings: buttons, input, panel
@@ -55,6 +56,8 @@ prisma.config.ts        Prisma 7 config (reads DATABASE_URL)
 proxy.ts                redirects /admin/* to /connexion when there is no session cookie
 ```
 
+What is not built yet, in order, is in [`TODO.md`](TODO.md).
+
 ## Design
 
 The look is built on road signage. All colours are tokens in `app/globals.css`
@@ -67,7 +70,7 @@ The look is built on road signage. All colours are tokens in `app/globals.css`
   and the login panel, a concrete-grey page background. Status colours follow
   road-sign meaning: green for in progress, amber for on hold, blue for finished.
 - **Signature:** the yellow road centre-line, used only in the logo, the active
-  sidebar marker and the login panel (`.road-line`). Keep it that rare.
+  sidebar marker, the login panel and the public hero (`.road-line`, `.road-line-x`). Keep it that rare.
 - **Pieces:** `panel`, `input`, `btnPrimary`, `btnSecondary` and `btnGhost` in
   `lib/ui.ts`; `PageHeader` at the top of every admin page.
 

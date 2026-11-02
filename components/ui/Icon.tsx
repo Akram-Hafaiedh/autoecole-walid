@@ -48,6 +48,60 @@ const paths = {
     ),
     chevronRight: <path d="m9 6 6 6-6 6" />,
     chevronLeft: <path d="m15 6-6 6 6 6" />,
+    arrowRight: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+    phone: (
+        <path d="M6.6 3.5h2.7l1.4 4-1.8 1.3a11 11 0 0 0 5.8 5.8l1.3-1.8 4 1.4v2.7a2 2 0 0 1-2.1 2A15.5 15.5 0 0 1 4.6 5.6 2 2 0 0 1 6.6 3.5z" />
+    ),
+    chat: (
+        <>
+            <path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4 19.5l1.4-4.6A7.5 7.5 0 1 1 20 11.5z" />
+        </>
+    ),
+    mail: (
+        <>
+            <rect x="3" y="5.5" width="18" height="13" rx="2.5" />
+            <path d="m4 7.5 8 6 8-6" />
+        </>
+    ),
+    pin: (
+        <>
+            <path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z" />
+            <circle cx="12" cy="10" r="2.3" />
+        </>
+    ),
+    clock: (
+        <>
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 7.5V12l3 2" />
+        </>
+    ),
+    book: (
+        <>
+            <path d="M5 4.5h10.5A3.5 3.5 0 0 1 19 8v12H8.5A3.5 3.5 0 0 1 5 16.5z" />
+            <path d="M5 16.5A3.5 3.5 0 0 1 8.5 13H19" />
+        </>
+    ),
+    wheel: (
+        <>
+            <circle cx="12" cy="12" r="8.5" />
+            <circle cx="12" cy="12" r="2" />
+            <path d="M12 14v6.5M10.2 11 3.8 9.5M13.8 11l6.4-1.5" />
+        </>
+    ),
+    route: (
+        <>
+            <circle cx="6" cy="18" r="2" />
+            <circle cx="18" cy="6" r="2" />
+            <path d="M8 18h6.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H16" />
+        </>
+    ),
+    shield: (
+        <>
+            <path d="M12 3.5 5 6v5.5c0 4.4 2.9 7.6 7 9 4.1-1.4 7-4.6 7-9V6z" />
+            <path d="m9 12 2.2 2.2L15.5 10" />
+        </>
+    ),
 } as const;
 
 export type IconName = keyof typeof paths;
