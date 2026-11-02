@@ -12,7 +12,7 @@ const icons: Record<string, IconName> = {
 export function OfferCard({ offer, featured = false }: { offer: Offer; featured?: boolean }) {
     return (
         <li
-            className={`flex flex-col rounded-2xl border bg-surface p-6 ${featured ? "border-2 border-brand" : "border-line"
+            className={`flex flex-col rounded-2xl border bg-surface p-6 shadow-card ${featured ? "border-2 border-brand" : "border-line"
                 }`}
         >
             <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand-ink">

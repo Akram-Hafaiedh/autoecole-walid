@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/ui/Logo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 /** The split layout shared by the login and registration pages. */
 export function AuthShell({
@@ -27,7 +28,8 @@ export function AuthShell({
                 <span aria-hidden="true" className="h-4" />
             </aside>
 
-            <section className="flex items-center justify-center px-6 py-12">
+            <section className="relative flex items-center justify-center px-6 py-12">
+                <ThemeToggle className="absolute top-4 right-4 grid size-10 place-items-center rounded-lg text-muted transition-colors hover:bg-line/60 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand" />
                 <div className="w-full max-w-sm">
                     <Logo className="mb-10 lg:hidden" />
                     <h1 className="font-display text-3xl font-bold tracking-tight">{title}</h1>

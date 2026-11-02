@@ -11,7 +11,7 @@ export const input =
     "w-full rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-brand/40";
 
 /** A white surface with a hairline border. Use for the main content blocks of a page. */
-export const panel = "rounded-2xl border border-line bg-surface";
+export const panel = "rounded-2xl border border-line bg-surface shadow-card";
 
 /** Same look as `input`, but only as wide as its content (for filters in a row). */
 export const inputInline = input.replace("w-full ", "");

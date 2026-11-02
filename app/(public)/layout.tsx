@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { PublicNav } from "@/components/public/PublicNav";
 import { site } from "@/lib/site";
 import { btnPrimary } from "@/lib/ui";
@@ -29,11 +30,14 @@ export default function PublicLayout({
             <PublicNav />
           </div>
 
-          <a href={`tel:${site.phone.tel}`} className={`${btnPrimary} md:order-none`}>
-            <Icon name="phone" className="size-4" />
-            <span className="max-sm:sr-only">{site.phone.display}</span>
-            <span className="sm:hidden" aria-hidden="true">Appeler</span>
-          </a>
+          <div className="flex items-center gap-2">
+            <ThemeToggle className="grid size-10 place-items-center rounded-lg text-muted transition-colors hover:bg-line/60 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand" />
+            <a href={`tel:${site.phone.tel}`} className={btnPrimary}>
+              <Icon name="phone" className="size-4" />
+              <span className="max-sm:sr-only">{site.phone.display}</span>
+              <span className="sm:hidden" aria-hidden="true">Appeler</span>
+            </a>
+          </div>
         </div>
       </header>
 

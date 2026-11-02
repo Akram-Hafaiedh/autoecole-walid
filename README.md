@@ -22,8 +22,8 @@ components/
   auth/LoginForm.tsx    login form (client component)
   admin/AdminNav.tsx    sidebar links with icons and the active page marked
   admin/PageHeader.tsx  page title, back link and action buttons
-  ui/                   Icon, Logo, Avatar, Pill, EmptyState, FormParts (Section, Field,
-                        FormError), useFormFields (shared form plumbing)
+  ui/                   Icon, Logo, Avatar, Pill, EmptyState, ThemeToggle, FormParts
+                        (Section, Field, FormError), useFormFields (shared form plumbing)
   students/             StudentForm, StatusPill
   instructors/          InstructorForm
   cars/                 CarForm, PlateChip, ServicePill
@@ -60,17 +60,25 @@ What is not built yet, in order, is in [`TODO.md`](TODO.md).
 
 ## Design
 
-The look is built on road signage. All colours are tokens in `app/globals.css`
-(light and dark); change the brand there, not in individual components.
+The look is built on road signage, in a quiet register. All colours are tokens in
+`app/globals.css`; change the brand there, not in individual components.
 
 - **Type:** Overpass (a road-sign typeface, loaded in `app/layout.tsx`) for
   headings, numbers and the logo; Geist for everything else. Use `font-display`
   for the first group.
-- **Colour:** signal green for actions, a deep asphalt green for the sidebar
-  and the login panel, a concrete-grey page background. Status colours follow
-  road-sign meaning: green for in progress, amber for on hold, blue for finished.
-- **Signature:** the yellow road centre-line, used only in the logo, the active
-  sidebar marker, the login panel and the public hero (`.road-line`, `.road-line-x`). Keep it that rare.
+- **Colour:** a warm ivory page, deep forest green for actions, a near-black green
+  for the sidebar, the hero and the login panel, and one muted brass accent. Status
+  colours follow road-sign meaning: green for in progress, amber for on hold, blue
+  for finished. Every text and background pair passes WCAG AA (4.5:1) in both themes.
+- **Light and dark:** light is the default. The dark theme is switched on by
+  `data-theme="dark"` on `<html>`. A small script in `app/layout.tsx` sets it before
+  the first paint (the visitor's saved choice, else the system setting), and
+  `components/ui/ThemeToggle.tsx` is the button (public header, admin sidebar, login
+  pages). The choice is kept in `localStorage`. To change a dark colour, edit the
+  `:root[data-theme="dark"]` block in `globals.css`.
+- **Signature:** the brass road centre-line, used only in the logo, the active
+  sidebar marker, the login panel and the public hero (`.road-line`, `.road-line-x`).
+  Keep it that rare.
 - **Pieces:** `panel`, `input`, `btnPrimary`, `btnSecondary` and `btnGhost` in
   `lib/ui.ts`; `PageHeader` at the top of every admin page.
 
