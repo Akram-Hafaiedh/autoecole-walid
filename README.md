@@ -11,9 +11,9 @@ app/
   globals.css           colour tokens (light + dark) shared by both areas
   (public)/             marketing site: /, /formules, /contact
   (admin)/admin/        internal tool: dashboard, eleves, moniteurs, vehicules, planning
-  (auth)/connexion/     login page: email code, no password
+  (auth)/connexion/     login page: e-mail and password; inscription/ is the registration page
 actions/
-  auth.ts               server actions: requestCode, verifyCode, logout
+  auth.ts               server action: logout (sign-in runs in the browser)
   students.ts           server actions: createStudent, updateStudent
   instructors.ts        server actions: createInstructor, updateInstructor
   cars.ts               server actions: createCar, updateCar (plate must be unique)
@@ -32,8 +32,8 @@ lib/
   site.ts               school name, phone, hours, offers (edit this first)
   ui.ts                 shared class strings: buttons, input, panel
   prisma.ts             shared Prisma client (import { prisma } from "@/lib/prisma")
-  otp.ts                login codes and session tokens (node:crypto only)
-  mail.ts               sends the login code by email (Resend)
+  auth-server.ts        Better Auth configuration
+  auth-client.ts        Better Auth client (browser)
   auth.ts               requireAdmin(), session cookie helpers
   students.ts           student form validation and labels
   instructors.ts        instructor form validation
@@ -46,12 +46,13 @@ lib/
   lessons.ts            lesson form validation, durations, conflict messages
   planning.ts           grid layout: side-by-side lanes, visible hours, URLs
 prisma/
-  schema.prisma         data model (students, instructors, cars, lessons)
+  schema.prisma         data model (users, students, instructors, cars, lessons)
   constraints.sql       double-booking rules Prisma cannot express
   seed-data.ts          fake students, instructors, cars and lessons (pure data)
   seed.ts               loads them into the database: npm run db:seed
+scripts/create-admin.ts  npm run auth:create-admin, creates the admin account
 prisma.config.ts        Prisma 7 config (reads DATABASE_URL)
-proxy.ts                redirects /admin/* to /connexion when the session cookie is missing or invalid
+proxy.ts                redirects /admin/* to /connexion when there is no session cookie
 ```
 
 ## Design
@@ -151,28 +152,36 @@ When a lesson is refused, Prisma raises an error on the constraint name
 (`lessons_no_instructor_overlap`, `lessons_no_car_overlap`,
 `lessons_no_student_overlap`). Catch it and show a clear message.
 
-## Login
+## Login and registration
 
-There is one user: the owner. No password. He clicks "Recevoir un code par
-e-mail" on `/connexion`, gets a 6-digit code at `ADMIN_EMAIL`, types it, and
-lands on `/admin`. The session lasts 7 days.
+Login uses [Better Auth](https://better-auth.com). Accounts are rows in the `users` and
+`accounts` tables (the password is stored as a hash, never as text). `/connexion` is the
+login page and `/inscription` the registration page. A session lasts 7 days.
 
-Because there is no password, whoever controls that mailbox controls the
-dashboard. Turn on 2-step verification on the owner's email account.
+**Registering does not give access.** A new account has role `user` and cannot open the
+dashboard (`requireAdmin()` in `lib/auth.ts` only accepts role `admin`). The owner
+activates it by running `npm run auth:create-admin` with that e-mail: it sets the role to
+`admin` and the password to the one he types. A screen in the dashboard to approve
+accounts, and roles such as secretary, are the natural next step.
 
-Rules enforced in `actions/auth.ts` and `lib/otp.ts`:
+Setup:
 
-- A code is valid 10 minutes, works once, and stops working after 5 guesses.
-- Only the newest code works. One request per minute, 5 per hour.
-- The database stores only a keyed hash of each code (`login_codes` table).
-- The session cookie is `httpOnly`, `sameSite=lax`, and `secure` in production.
-- Changing `SESSION_SECRET` signs everyone out.
+1. Environment variables, in `.env` and on Vercel: `BETTER_AUTH_SECRET`
+   (`openssl rand -base64 32`) and `BETTER_AUTH_URL` (the site's address).
+2. Create the first admin (for production, put the production `DATABASE_URL` in `.env`
+   first): `npm run auth:create-admin`. It asks for the e-mail and the password
+   (10 characters minimum, typed hidden, asked twice).
 
-Setup: set `ADMIN_EMAIL`, `SESSION_SECRET` (`openssl rand -base64 32`),
-`RESEND_API_KEY` and `MAIL_FROM` in `.env` (see `.env.example`). In development
-you can leave `RESEND_API_KEY` empty: the code is printed in the terminal.
-In production, verify a domain in Resend. Until then Resend only delivers to
-the email of your own Resend account.
+Where things are:
+
+- `lib/auth-server.ts`: the Better Auth configuration (password rules, role, rate limits).
+- `app/api/auth/[...all]/route.ts`: the endpoints Better Auth serves.
+- `lib/auth-client.ts`, `components/auth/LoginForm.tsx`, `RegisterForm.tsx`: the browser side.
+- `lib/auth.ts`: `requireAdmin()`, the check every admin page and action uses.
+
+Sign-in is limited to 5 attempts per 15 minutes and registration to 5 per hour, per IP
+address (`rate_limits` table). Google sign-in can be added later in `lib/auth-server.ts`
+(`socialProviders`) next to the password, using the same tables.
 
 Every admin page, layout and server action must call `await requireAdmin()`
 from `lib/auth.ts`. Do not rely on the layout alone.

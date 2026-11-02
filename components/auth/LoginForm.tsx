@@ -1,75 +1,98 @@
 "use client";
 
-import { useActionState } from "react";
-import { requestCode, verifyCode, type FormState } from "@/actions/auth";
-import { btnGhost, btnPrimary, input } from "@/lib/ui";
-
-const initial: FormState = { status: "idle" };
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { authClient } from "@/lib/auth-client";
+import { btnPrimary, input } from "@/lib/ui";
 
 export function LoginForm() {
-    const [request, requestAction, requesting] = useActionState(requestCode, initial);
-    const [verify, verifyAction, verifying] = useActionState(verifyCode, initial);
-    const sent = request.status === "sent";
+    const router = useRouter();
+    const [error, setError] = useState<string | null>(null);
+    const [pending, setPending] = useState(false);
+
+    async function onSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        setPending(true);
+        setError(null);
+
+        const { data, error } = await authClient.signIn.email({
+            email: String(form.get("email") ?? "").trim(),
+            password: String(form.get("password") ?? ""),
+        });
+
+        if (error) {
+            setPending(false);
+            setError(
+                error.status === 429
+                    ? "Trop d’essais. Réessayez dans quelques minutes."
+                    : error.status === 401
+                        ? "E-mail ou mot de passe incorrect."
+                        : `Erreur ${error.status} : ${error.code ?? error.message ?? "inconnue"}`,
+            );
+            return;
+        }
+
+        // A registered account stays locked out until the owner activates it.
+        if ((data?.user as { role?: string } | undefined)?.role !== "admin") {
+            await authClient.signOut();
+            setPending(false);
+            setError("Votre compte n’est pas encore activé. Contactez le responsable.");
+            return;
+        }
+        router.push("/admin");
+        router.refresh();
+    }
+
+    const invalid = error ? true : undefined;
 
     return (
-        <div className="flex flex-col gap-5">
-            {request.message && (
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            {error && (
                 <p
-                    role="status"
-                    className={`rounded-lg px-3.5 py-2.5 text-sm ${request.status === "error"
-                            ? "border border-danger/30 bg-danger/10 font-medium text-danger"
-                            : "bg-brand-soft text-brand-ink"
-                        }`}
+                    id="login-error"
+                    role="alert"
+                    className="rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-2.5 text-sm font-medium text-danger"
                 >
-                    {request.message}
+                    {error}
                 </p>
             )}
 
-            {!sent && (
-                <form action={requestAction}>
-                    <button type="submit" disabled={requesting} className={`${btnPrimary} w-full py-3`}>
-                        {requesting ? "Envoi du code…" : "Recevoir un code par e-mail"}
-                    </button>
-                </form>
-            )}
+            <div className="flex flex-col gap-1.5">
+                <label htmlFor="email" className="text-sm font-medium">
+                    E-mail
+                </label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    required
+                    autoFocus
+                    aria-invalid={invalid}
+                    aria-describedby={invalid ? "login-error" : undefined}
+                    className={`${input} aria-invalid:border-danger`}
+                />
+            </div>
 
-            {sent && (
-                <>
-                    <form action={verifyAction} className="flex flex-col gap-3">
-                        <label htmlFor="code" className="text-sm font-medium">
-                            Code à 6 chiffres
-                        </label>
-                        <input
-                            id="code"
-                            name="code"
-                            type="text"
-                            inputMode="numeric"
-                            autoComplete="one-time-code"
-                            pattern="[0-9 ]*"
-                            maxLength={7}
-                            required
-                            autoFocus
-                            aria-invalid={verify.status === "error" ? true : undefined}
-                            aria-describedby={verify.status === "error" ? "code-error" : undefined}
-                            className={`${input} py-3 text-center font-display text-3xl font-bold tracking-[0.4em] tabular-nums aria-invalid:border-danger`}
-                        />
-                        {verify.status === "error" && (
-                            <p id="code-error" role="alert" className="text-sm font-medium text-danger">
-                                {verify.message}
-                            </p>
-                        )}
-                        <button type="submit" disabled={verifying} className={`${btnPrimary} w-full py-3`}>
-                            {verifying ? "Vérification…" : "Se connecter"}
-                        </button>
-                    </form>
+            <div className="flex flex-col gap-1.5">
+                <label htmlFor="password" className="text-sm font-medium">
+                    Mot de passe
+                </label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    aria-invalid={invalid}
+                    className={`${input} aria-invalid:border-danger`}
+                />
+            </div>
 
-                    <form action={requestAction} className="text-center">
-                        <button type="submit" disabled={requesting} className={btnGhost}>
-                            {requesting ? "Envoi du code…" : "Renvoyer un code"}
-                        </button>
-                    </form>
-                </>
-            )}
-        </div>
+            <button type="submit" disabled={pending} className={`${btnPrimary} mt-2 w-full py-3`}>
+                {pending ? "Connexion…" : "Se connecter"}
+            </button>
+        </form>
     );
 }

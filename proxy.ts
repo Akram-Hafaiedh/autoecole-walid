@@ -1,16 +1,13 @@
+import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, isValidSessionToken } from "@/lib/otp";
 
-// Quick cookie check before any /admin page runs. No database access here.
-// This is a safety net, not the only lock: every admin page, layout and server
-// action still calls requireAdmin() from lib/auth.ts.
+// Quick check before any /admin page runs: is there a session cookie at all? It does not
+// prove the session is valid, and it makes no database call. Every admin page, layout and
+// server action still calls requireAdmin() from lib/auth.ts, which does the real check.
 export function proxy(request: NextRequest) {
-    const token = request.cookies.get(SESSION_COOKIE)?.value;
-
-    if (!isValidSessionToken(token)) {
+    if (!getSessionCookie(request)) {
         return NextResponse.redirect(new URL("/connexion", request.url));
     }
-
     return NextResponse.next();
 }
 

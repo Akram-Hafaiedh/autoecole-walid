@@ -1,12 +1,16 @@
-import { cookies } from "next/headers";
+import { cache } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createSessionToken, isValidSessionToken, SESSION_COOKIE, SESSION_TTL_S } from "./otp";
+import { auth } from "@/lib/auth-server";
 
-const COOKIE = SESSION_COOKIE;
+/** The signed-in user, or null. Read once per request, even if called many times. */
+export const getSession = cache(async () =>
+    auth.api.getSession({ headers: await headers() }),
+);
 
+/** True only for an account the owner has activated (role "admin"). */
 export async function isAdmin(): Promise<boolean> {
-    const store = await cookies();
-    return isValidSessionToken(store.get(COOKIE)?.value);
+    return (await getSession())?.user.role === "admin";
 }
 
 /**
@@ -16,20 +20,4 @@ export async function isAdmin(): Promise<boolean> {
  */
 export async function requireAdmin(): Promise<void> {
     if (!(await isAdmin())) redirect("/connexion");
-}
-
-export async function startSession(): Promise<void> {
-    const store = await cookies();
-    store.set(COOKIE, createSessionToken(), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: SESSION_TTL_S,
-    });
-}
-
-export async function endSession(): Promise<void> {
-    const store = await cookies();
-    store.delete(COOKIE);
 }
