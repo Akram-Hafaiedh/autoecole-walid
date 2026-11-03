@@ -63,6 +63,18 @@ async function main() {
         const cars = await prisma.car.createMany({ data: buildSeedCars(), skipDuplicates: true });
         console.log(`Cars: removed ${removedCars.count}, created ${cars.count}.`);
 
+        // Example price list, only when the owner has not set any price yet (never overwrites real prices).
+        if ((await prisma.rate.count()) === 0) {
+            await prisma.rate.createMany({
+                data: [
+                    { kind: "driving", mode: "per_hour", amount: 25000, absenceFee: 0 },
+                    { kind: "code", mode: "per_session", amount: 10000, absenceFee: 0 },
+                    { kind: "exam", mode: "per_session", amount: 60000, absenceFee: 0 },
+                ],
+            });
+            console.log("Rates: created an example price list (change it in Tarifs).");
+        }
+
         const lessons = buildSeedLessons({
             students: await prisma.student.findMany({
                 where: { nationalId: { startsWith: SEED_PREFIX } },

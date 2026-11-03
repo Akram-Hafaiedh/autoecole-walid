@@ -18,6 +18,8 @@ import {
     type LessonFormState,
     type LessonKindValue,
 } from "@/lib/lessons";
+import { PRICE_MODE_LABELS } from "@/lib/billing";
+import { site } from "@/lib/site";
 import { durationLabel, formatTime } from "@/lib/time";
 import { btnPrimary, btnSecondary, input } from "@/lib/ui";
 
@@ -33,6 +35,8 @@ type Props = {
     withStatus?: boolean;
     submitLabel: string;
     cancelHref: string;
+    /** In edit mode, a sentence saying what the lesson is billed. */
+    billing?: string;
 };
 
 export function LessonForm({
@@ -44,6 +48,7 @@ export function LessonForm({
     withStatus = false,
     submitLabel,
     cancelHref,
+    billing,
 }: Props) {
     const { state, formAction, pending, error, props } = useFormFields(action, initial);
 
@@ -53,6 +58,7 @@ export function LessonForm({
     const [date, setDate] = useState(initial.date);
     const [time, setTime] = useState(initial.time);
     const [duration, setDuration] = useState(initial.duration);
+    const [priceMode, setPriceMode] = useState(state.values?.priceMode ?? initial.priceMode);
 
     const end = endMinutes(time, duration);
     const minutes = Number(duration);
@@ -221,6 +227,41 @@ export function LessonForm({
                 <Field name="notes" label="Notes" error={error("notes")} full>
                     <textarea {...props("notes")} rows={3} maxLength={2000} />
                 </Field>
+            </Section>
+
+            <Section
+                title="Prix"
+                description={
+                    billing ??
+                    "Le prix est calculé quand la leçon est marquée « Effectuée », avec le tarif habituel ou celui convenu avec l’élève."
+                }
+            >
+                <Field
+                    name="priceMode"
+                    label="Prix de cette leçon"
+                    error={error("priceMode")}
+                    hint="Choisissez un prix particulier seulement si cette leçon fait exception."
+                >
+                    <select
+                        {...props("priceMode", true)}
+                        value={priceMode}
+                        onChange={(event) => setPriceMode(event.target.value)}
+                    >
+                        <option value="">Tarif habituel (automatique)</option>
+                        <option value="per_session">Prix fixe pour cette leçon</option>
+                        <option value="per_hour">Prix à l’heure pour cette leçon</option>
+                    </select>
+                </Field>
+                {priceMode !== "" && (
+                    <Field
+                        name="price"
+                        label={`${priceMode === "per_hour" ? "Prix de l’heure" : "Prix de la leçon"} (${site.currency})`}
+                        error={error("price")}
+                        hint={priceMode === "per_hour" ? `Montant ${PRICE_MODE_LABELS.per_hour}, multiplié par la durée.` : undefined}
+                    >
+                        <input {...props("price")} type="text" inputMode="decimal" required autoComplete="off" maxLength={12} />
+                    </Field>
+                )}
             </Section>
 
             <div className="flex flex-wrap gap-3">

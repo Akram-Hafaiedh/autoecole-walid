@@ -56,6 +56,8 @@ export default async function NewLessonPage({ searchParams }: { searchParams: Se
                     date,
                     time: "08:00",
                     duration: "120",
+                    priceMode: "",
+                    price: "",
                     notes: "",
                 }}
             />

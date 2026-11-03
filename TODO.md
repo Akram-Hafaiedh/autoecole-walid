@@ -4,8 +4,8 @@ What the project does not have yet, most important first. Tick a box when it is 
 
 ## Next, in this order
 
-1. [ ] **Public pages redesign.** Bring the public site up to the look of the login page and the dashboard.
-2. [ ] **Payments.** Per session and per hour billing, what each student has paid and still owes, and a monthly summary (lessons and hours per instructor and per car).
+1. [x] **Public pages redesign.** Bring the public site up to the look of the login page and the dashboard.
+2. [ ] **Payments.** Done: price list, discounts, price per lesson (Tarifs page). Left: student account (agreed prices, package, discounts, payments, balance), monthly summary (lessons and hours per instructor and per car), money figures on the dashboard.
 3. [ ] **Student page: lesson history and progress.** List of the student's lessons, hours done against hours needed, and the steps of the licence (code exam, driving exam).
 4. [ ] **"Comptes" page.** Activate registered accounts from the dashboard (today it is done with `npm run auth:create-admin`) and set a role per account.
 5. [ ] **Public site content and contact form.** Real hours, prices, photos and address in `lib/site.ts`, plus a form that creates a prospect the owner can follow up.

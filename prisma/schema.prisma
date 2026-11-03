@@ -40,6 +40,40 @@ enum LessonStatus {
   @@map("lesson_status")
 }
 
+enum PriceMode {
+  per_session
+  per_hour
+
+  @@map("price_mode")
+}
+
+/// Where a lesson's billed amount came from (see lib/billing.ts).
+enum ChargeSource {
+  standard
+  student
+  custom
+  package
+  absence
+
+  @@map("charge_source")
+}
+
+enum PaymentMethod {
+  cash
+  transfer
+  cheque
+  other
+
+  @@map("payment_method")
+}
+
+enum DiscountKind {
+  percent
+  fixed
+
+  @@map("discount_kind")
+}
+
 enum Transmission {
   manual
   automatic
@@ -59,10 +93,15 @@ model Student {
   licenceCategory String        @default("B") @map("licence_category")
   status          StudentStatus @default(active)
   notes           String?
+  /// A total price agreed for everything (a "forfait"), in millimes. Their lessons are then included.
+  packageTotal    Int?          @map("package_total")
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  lessons Lesson[]
+  lessons   Lesson[]
+  rates     StudentRate[]
+  discounts StudentDiscount[]
+  payments  Payment[]
 
   @@map("students")
 }
@@ -190,6 +229,13 @@ model Lesson {
   startsAt     DateTime     @map("starts_at") @db.Timestamptz(6)
   endsAt       DateTime     @map("ends_at") @db.Timestamptz(6)
   notes        String?
+  /// A price set on this one lesson. Both are set together, or both are empty.
+  customPriceMode PriceMode? @map("custom_price_mode")
+  /// In millimes: per session, or per hour.
+  customPrice     Int?       @map("custom_price")
+  /// What the lesson is billed, in millimes. Set when it is marked done or absent, then kept.
+  amount          Int?
+  chargeSource    ChargeSource? @map("charge_source")
   createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -199,4 +245,86 @@ model Lesson {
 
   @@index([startsAt])
   @@map("lessons")
+}
+
+/// The school's standard price for one kind of lesson. One row per kind; no row means no price yet.
+model Rate {
+  kind       LessonKind @id
+  mode       PriceMode
+  /// Millimes: per session, or per hour.
+  amount     Int
+  /// Charged when the student does not show up. 0 means nothing.
+  absenceFee Int        @default(0) @map("absence_fee")
+  updatedAt  DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("rates")
+}
+
+/// A price agreed with one student for one kind of lesson. Beats the standard price.
+model StudentRate {
+  studentId String     @map("student_id") @db.Uuid
+  kind      LessonKind
+  mode      PriceMode
+  amount    Int
+  student   Student    @relation(fields: [studentId], references: [id])
+
+  @@id([studentId, kind])
+  @@map("student_rates")
+}
+
+/// A discount the school offers, for example "Réseaux sociaux" or "Fêtes".
+model Discount {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  kind      DiscountKind
+  /// A percentage from 1 to 100, or an amount in millimes.
+  value     Int
+  active    Boolean      @default(true)
+  /// Optional window in which it can be given, for a holiday offer.
+  validFrom DateTime?    @map("valid_from") @db.Date
+  validTo   DateTime?    @map("valid_to") @db.Date
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  given StudentDiscount[]
+
+  @@map("discounts")
+}
+
+/// A discount given to a student. The name and value are copied, so editing the offer later
+/// does not change what the student was promised.
+model StudentDiscount {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId  String       @map("student_id") @db.Uuid
+  discountId String?      @map("discount_id") @db.Uuid
+  label      String
+  kind       DiscountKind
+  value      Int
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// Set when the discount is taken back. The row stays, for the record.
+  voidedAt   DateTime?    @map("voided_at") @db.Timestamptz(6)
+
+  student  Student   @relation(fields: [studentId], references: [id])
+  discount Discount? @relation(fields: [discountId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@map("student_discounts")
+}
+
+/// Money received from a student. Never deleted: a mistake is cancelled (voidedAt) and re-entered.
+model Payment {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String        @map("student_id") @db.Uuid
+  /// Millimes, always more than 0.
+  amount    Int
+  paidOn    DateTime      @map("paid_on") @db.Date
+  method    PaymentMethod @default(cash)
+  note      String?
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt  DateTime?     @map("voided_at") @db.Timestamptz(6)
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, paidOn])
+  @@map("payments")
 }

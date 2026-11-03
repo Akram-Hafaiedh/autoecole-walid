@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
+import { chargeLesson, type ChargeSource } from "@/lib/billing";
 import { isForeignKeyViolation } from "@/lib/db-errors";
 import { isUuid } from "@/lib/format";
 import { readFields } from "@/lib/form";
@@ -63,6 +64,62 @@ async function findConflicts(data: LessonInput, ignoreId?: string): Promise<Erro
     return errors;
 }
 
+type SavedLesson = {
+    status: string;
+    kind: string;
+    studentId: string;
+    startsAt: Date;
+    endsAt: Date;
+    customPriceMode: string | null;
+    customPrice: number | null;
+    amount: number | null;
+    chargeSource: ChargeSource | null;
+};
+
+const minutesOf = (from: Date, to: Date) => Math.round((to.getTime() - from.getTime()) / 60_000);
+
+/**
+ * What the lesson is billed, worked out when it is marked done (or absent) and then kept. A lesson
+ * that is saved again with the same status, student, kind, length and price keeps the amount it
+ * already has, so a price list changed later never rewrites an old lesson. A done lesson that had
+ * no price (none was set yet) is worked out again.
+ */
+async function priceFor(data: LessonInput, saved?: SavedLesson) {
+    const minutes = minutesOf(data.startsAt, data.endsAt);
+
+    if (
+        saved &&
+        saved.amount !== null &&
+        saved.status === data.status &&
+        saved.kind === data.kind &&
+        saved.studentId === data.studentId &&
+        minutesOf(saved.startsAt, saved.endsAt) === minutes &&
+        saved.customPriceMode === data.customPriceMode &&
+        saved.customPrice === data.customPrice
+    ) {
+        return { amount: saved.amount, chargeSource: saved.chargeSource };
+    }
+
+    const [rate, studentRate, student] = await Promise.all([
+        prisma.rate.findUnique({ where: { kind: data.kind } }),
+        prisma.studentRate.findUnique({ where: { studentId_kind: { studentId: data.studentId, kind: data.kind } } }),
+        prisma.student.findUnique({ where: { id: data.studentId }, select: { packageTotal: true } }),
+    ]);
+
+    const charge = chargeLesson({
+        status: data.status,
+        minutes,
+        custom:
+            data.customPriceMode && data.customPrice !== null
+                ? { mode: data.customPriceMode, amount: data.customPrice }
+                : null,
+        studentRate: studentRate ? { mode: studentRate.mode, amount: studentRate.amount } : null,
+        standardRate: rate ? { mode: rate.mode, amount: rate.amount, absenceFee: rate.absenceFee } : null,
+        hasPackage: student?.packageTotal != null,
+    });
+    return { amount: charge.amount, chargeSource: charge.source };
+}
+
 /** Turns a database failure into a message on the form, or lets unknown errors through. */
 function explain(error: unknown, formData: FormData): LessonFormState {
     const field = conflictField(error);
@@ -89,7 +146,7 @@ export async function createLesson(_previous: LessonFormState, formData: FormDat
     }
 
     try {
-        await prisma.lesson.create({ data: parsed.data });
+        await prisma.lesson.create({ data: { ...parsed.data, ...(await priceFor(parsed.data)) } });
     } catch (error) {
         return explain(error, formData);
     }
@@ -115,8 +172,27 @@ export async function updateLesson(
         return { errors: conflicts, values: readFields(formData, LESSON_FIELDS), message: FIX_FIELDS };
     }
 
+    const saved = await prisma.lesson.findUnique({
+        where: { id },
+        select: {
+            status: true,
+            kind: true,
+            studentId: true,
+            startsAt: true,
+            endsAt: true,
+            customPriceMode: true,
+            customPrice: true,
+            amount: true,
+            chargeSource: true,
+        },
+    });
+    if (!saved) return { message: "Leçon introuvable." };
+
     try {
-        const result = await prisma.lesson.updateMany({ where: { id }, data: parsed.data });
+        const result = await prisma.lesson.updateMany({
+            where: { id },
+            data: { ...parsed.data, ...(await priceFor(parsed.data, saved)) },
+        });
         if (result.count === 0) return { message: "Leçon introuvable." };
     } catch (error) {
         return explain(error, formData);

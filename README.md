@@ -246,6 +246,17 @@ DELETE FROM cars WHERE notes LIKE '[démo]%';
 
 Do not run it against the production database.
 
+## Prices and billing
+
+Money is stored in millimes (1 DT = 1000 millimes). The **Tarifs** page holds the usual price per kind of
+lesson (per session or per hour, plus an optional absence fee, 0 by default) and the list of discounts.
+
+A lesson is billed when it is marked done or absent, and the amount is then frozen. Priority:
+price set on the lesson > student's total package (lessons included) > price agreed with the student
+for that kind > usual price. An absent student pays the absence fee only (nothing inside a package).
+Balance = charges - discounts - payments; a positive balance means the student owes.
+Pure rules: `lib/billing.ts`. Money parsing and display: `lib/money.ts`.
+
 ## Not built yet
 
 - Roles beyond the single owner (for example instructors with their own login).

@@ -5,8 +5,10 @@
 // 12 hours (a 1 h lesson and an 8 h day are the same kind of record). It must end before
 // midnight, so every lesson belongs to one day of the planning.
 
+import { PRICE_MODES, type PriceMode } from "@/lib/billing";
 import { isUuid } from "@/lib/format";
 import { readFields, type FormState } from "@/lib/form";
+import { parseMoney } from "@/lib/money";
 import { parseTime, zonedTimeToUtc } from "@/lib/time";
 import { parseDateOnly } from "@/lib/validation";
 
@@ -45,6 +47,8 @@ export type LessonField =
     | "date"
     | "time"
     | "duration"
+    | "priceMode"
+    | "price"
     | "notes";
 
 export type LessonFormState = FormState<LessonField>;
@@ -58,6 +62,8 @@ export const LESSON_FIELDS: readonly LessonField[] = [
     "date",
     "time",
     "duration",
+    "priceMode",
+    "price",
     "notes",
 ];
 
@@ -69,6 +75,9 @@ export type LessonInput = {
     status: LessonStatusValue;
     startsAt: Date;
     endsAt: Date;
+    /** A price set on this one lesson (both set, or both null). Millimes, per session or per hour. */
+    customPriceMode: PriceMode | null;
+    customPrice: number | null;
     notes: string | null;
 };
 
@@ -124,6 +133,19 @@ export function parseLessonForm(formData: FormData, timeZone: string): LessonPar
         }
     }
 
+    // An empty price type means "use the usual price".
+    let customPriceMode: PriceMode | null = null;
+    let customPrice: number | null = null;
+    if (v.priceMode !== "") {
+        if (!(PRICE_MODES as readonly string[]).includes(v.priceMode)) {
+            errors.priceMode = "Type de prix invalide.";
+        } else {
+            customPriceMode = v.priceMode as PriceMode;
+            customPrice = parseMoney(v.price);
+            if (customPrice === null) errors.price = "Indiquez le prix (par exemple 25 ou 12,5).";
+        }
+    }
+
     if (v.notes.length > 2000) errors.notes = "2000 caractères au maximum.";
 
     if (Object.keys(errors).length > 0) return { ok: false, errors, values: v };
@@ -140,6 +162,8 @@ export function parseLessonForm(formData: FormData, timeZone: string): LessonPar
             status: status as LessonStatusValue,
             startsAt,
             endsAt: new Date(startsAt.getTime() + Number(v.duration) * 60_000),
+            customPriceMode,
+            customPrice,
             notes: v.notes || null,
         },
     };

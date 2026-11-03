@@ -5,7 +5,9 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { LessonForm } from "@/components/planning/LessonForm";
 import { kindStyles } from "@/components/planning/lessonStyles";
 import { requireAdmin } from "@/lib/auth";
+import { CHARGE_SOURCE_LABELS } from "@/lib/billing";
 import { isUuid } from "@/lib/format";
+import { formatMoney, toMoneyInput } from "@/lib/money";
 import { KIND_LABELS, LESSON_STATUS_LABELS, type LessonKindValue, type LessonStatusValue } from "@/lib/lessons";
 import { planningHref } from "@/lib/planning";
 import { prisma } from "@/lib/prisma";
@@ -40,6 +42,15 @@ export default async function EditLessonPage({ params }: { params: Promise<{ id:
     const kind = lesson.kind as LessonKindValue;
     const status = lesson.status as LessonStatusValue;
 
+    const billing =
+        lesson.amount !== null
+            ? `Facturée ${formatMoney(lesson.amount)}${lesson.chargeSource ? ` · ${CHARGE_SOURCE_LABELS[lesson.chargeSource]}` : ""}. Ce montant est figé : changer un tarif ne le modifie pas.`
+            : status === "completed"
+              ? "Aucun tarif n’était défini quand la leçon a été marquée effectuée. Renseignez-le dans Tarifs, puis enregistrez de nouveau cette leçon."
+              : status === "cancelled"
+                ? "Une leçon annulée n’est pas facturée."
+                : "Elle sera facturée quand vous la marquerez « Effectuée », avec le tarif habituel ou celui convenu avec l’élève.";
+
     // Archived students and inactive instructors or cars are not offered for new lessons,
     // but stay in the list when this lesson already uses them.
     return (
@@ -63,6 +74,7 @@ export default async function EditLessonPage({ params }: { params: Promise<{ id:
                 submitLabel="Enregistrer"
                 withStatus
                 cancelHref={planningHref({ semaine: begin.date })}
+                billing={billing}
                 students={students
                     .filter((s) => s.status !== "archived" || s.id === lesson.studentId)
                     .map((s) => ({ id: s.id, label: `${s.lastName} ${s.firstName}` }))}
@@ -81,6 +93,8 @@ export default async function EditLessonPage({ params }: { params: Promise<{ id:
                     date: begin.date,
                     time: formatTime(begin.minutes),
                     duration: String(length),
+                    priceMode: lesson.customPriceMode ?? "",
+                    price: toMoneyInput(lesson.customPrice),
                     notes: lesson.notes ?? "",
                 }}
             />
