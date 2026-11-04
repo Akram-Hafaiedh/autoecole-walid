@@ -5,13 +5,24 @@ What the project does not have yet, most important first. Tick a box when it is 
 ## Next, in this order
 
 1. [x] **Public pages redesign.** Bring the public site up to the look of the login page and the dashboard.
-2. [ ] **Payments.** Done: price list, discounts, price per lesson (Tarifs page). Left: student account (agreed prices, package, discounts, payments, balance), monthly summary (lessons and hours per instructor and per car), money figures on the dashboard.
-3. [ ] **Student page: lesson history and progress.** List of the student's lessons, hours done against hours needed, and the steps of the licence (code exam, driving exam).
-4. [ ] **"Comptes" page.** Activate registered accounts from the dashboard (today it is done with `npm run auth:create-admin`) and set a role per account.
+2. [ ] **Payments.** What is left: a printable receipt.
+    - [x] Price list, discounts and a price per lesson (Tarifs page)
+    - [x] Payments, discounts and prices per student (`/admin/eleves/[id]/paiements`)
+    - [x] Monthly summary and money figures on the dashboard (`/admin/bilan`)
+    - [x] Year view of the summary (`/admin/bilan?vue=annee`)
+    - [ ] Printable receipt for a payment
+3. [ ] **Student profile.** What is left: hours needed against hours done, and the steps of the licence.
+    - [x] Overview at the top of the student page (hours driven, code sessions, next lesson, balance)
+    - [x] Every lesson with its amount (`/admin/eleves/[id]/paiements`)
+    - [ ] Hours needed per licence category, and progress against it (the owner gives the numbers)
+    - [ ] Steps of the licence (code exam, driving exam) with dates
+4. [x] **"Comptes" page** (`/admin/comptes`). Activate or remove registered accounts from the dashboard. Roles beyond "admin" are under Roles below.
 5. [ ] **Public site content and contact form.** Real hours, prices, photos and address in `lib/site.ts`, plus a form that creates a prospect the owner can follow up.
 6. [ ] **SMS or WhatsApp reminders** about lessons. Last, because it needs a paid messaging service.
 
 ## Running the school
+
+- [ ] **Student page, right-hand side.** On a wide screen the space next to the student form is empty on purpose. Keep it for whatever the school needs there later (documents, exam dates, notes).
 
 - [ ] **Roles.** Owner, secretary, and an instructor who only sees their own lessons (today an account is either `user`, with no access, or `admin`).
 - [ ] **Availability.** Working hours and days off per instructor, downtime per car. The planning only prevents overlaps; it does not know that an instructor does not work on Friday.
@@ -19,6 +30,7 @@ What the project does not have yet, most important first. Tick a box when it is 
 - [ ] **Exams.** Exam dates per student, shown in the planning.
 - [ ] **Student documents.** A place for the ID copy, medical certificate and photos.
 - [ ] **History of changes.** Who edited what, and when.
+- [ ] **Instructor timesheet.** A printable month sheet per instructor (day by day: lessons, hours), built from the lessons already marked done, for pay. Real clock-in and clock-out only if instructors are paid for time outside lessons.
 - [ ] **Reports and export.** Monthly figures, and a way to export students and payments.
 
 ## Public site

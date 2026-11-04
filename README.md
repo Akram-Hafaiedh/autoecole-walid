@@ -171,9 +171,11 @@ login page and `/inscription` the registration page. A session lasts 7 days.
 
 **Registering does not give access.** A new account has role `user` and cannot open the
 dashboard (`requireAdmin()` in `lib/auth.ts` only accepts role `admin`). The owner
-activates it by running `npm run auth:create-admin` with that e-mail: it sets the role to
-`admin` and the password to the one he types. A screen in the dashboard to approve
-accounts, and roles such as secretary, are the natural next step.
+activates it on `/admin/comptes` ("Comptes" in the menu, and a banner on the dashboard when
+accounts are waiting). There he can also remove an account that was never activated, and take
+the access away from an administrator (which signs that person out everywhere). He cannot
+do that to himself, and the last administrator can never be removed. The first administrator
+is still created with `npm run auth:create-admin`. Roles such as secretary are the next step.
 
 Setup:
 
@@ -205,7 +207,7 @@ against a forgotten `requireAdmin()`, not a replacement for it.
 `/admin/eleves` lists students 15 per page (search by name or phone, filter by
 status; archived students are hidden by default; search and filter are kept when
 you change page). `/admin/eleves/nouveau` creates one
-and `/admin/eleves/<id>` edits one. Students are never deleted, because lessons
+and `/admin/eleves/<id>` is the student profile: an overview, then the edit form. Students are never deleted, because lessons
 refer to them: set the status to "Archivé" instead. The national ID is only
 loaded on the edit page, never in the list.
 
@@ -226,7 +228,7 @@ never touched. To remove them by hand:
 DELETE FROM students WHERE national_id LIKE 'SEED-%';
 ```
 
-The seed also creates 102 demo lessons over this week and next (1 h to 8 h,
+The seed also creates about 350 demo lessons from five weeks ago to next week (1 h to 8 h,
 starting as early as 06:00, code lessons, back-to-back lessons, weekends included,
 past ones marked done, absent or cancelled), with notes starting `[démo]`. Running it
 again replaces them. To remove them by hand:
@@ -234,6 +236,11 @@ again replaces them. To remove them by hand:
 ```sql
 DELETE FROM lessons WHERE notes LIKE '[démo]%';
 ```
+
+Done and absent demo lessons are billed with the price list (an example one is created if you have none), and
+about 40 demo payments are added (notes starting `[démo]`), so the monthly summary and the "who owes" list are filled.
+It also creates three discounts (10 % social media, 20 DT referral, 5 % year-end offer) unless a discount with that name exists, and gives them to about one demo student in four.
+Re-running removes and recreates them. To remove the payments by hand: `DELETE FROM payments WHERE note LIKE '[démo]%';`
 
 It also creates 4 instructors (email ending `@seed.invalid`) and 6 cars
 (notes starting `[démo]`), covering every service state. A demo instructor or car
@@ -257,12 +264,26 @@ for that kind > usual price. An absent student pays the absence fee only (nothin
 Balance = charges - discounts - payments; a positive balance means the student owes.
 Pure rules: `lib/billing.ts`. Money parsing and display: `lib/money.ts`.
 
+### Student payments
+
+`/admin/eleves/[id]/paiements` (button "Paiements et leçons" on the student page) shows what the student owes (there is no student login: this is a page for the school, part of the student profile) and has paid.
+There you add payments (never deleted, only cancelled), give discounts from the Tarifs list, set a total price
+or per-kind prices for that student, and see every lesson with its billed amount. Giving a discount copies it, so
+editing the offer later changes nothing for students who already have it. The button "Calculer les prix manquants"
+prices done lessons that were saved before any price existed; lessons that already have an amount are never touched.
+
+### Monthly summary
+
+`/admin/bilan` ("Bilan du mois" in the menu, `?mois=2026-11` for another month): lessons done, hours, absences and
+billed amount per instructor and per car, what was received that month (by payment date), and the students who owe
+money. Only lessons marked done or absent count. The dashboard shows received, billed and owed for the current month.
+The Mois / Année switch opens `/admin/bilan?vue=annee` (`?annee=2026`): one row per month with a yearly total, each month linking to its detail.
+Rules in `lib/bilan.ts`; balances in `lib/finance.ts`.
+
 ## Not built yet
 
-- Roles beyond the single owner (for example instructors with their own login).
-- The lesson history on each student's page.
-- Payments, per session or per hour (both are planned).
-- SMS/WhatsApp reminders.
+See [`TODO.md`](TODO.md) for the full list, for example roles beyond the owner (a secretary, instructors
+with their own login), exams, student documents and SMS/WhatsApp reminders.
 
 ## Notes
 

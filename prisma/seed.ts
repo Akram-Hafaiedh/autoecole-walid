@@ -13,11 +13,15 @@ import {
     SEED_CAR_MARK,
     SEED_INSTRUCTOR_DOMAIN,
     SEED_LESSON_MARK,
+    SEED_PAYMENT_MARK,
     SEED_PREFIX,
     buildSeedCars,
+    buildSeedDiscounts,
     buildSeedInstructors,
     buildSeedLessons,
+    buildSeedPayments,
     buildSeedStudents,
+    pickDiscountRecipients,
 } from "./seed-data";
 import { site } from "../lib/site";
 
@@ -30,13 +34,25 @@ async function main() {
     const prisma = new PrismaClient({ adapter });
 
     try {
-        // Demo lessons go first, because they refer to the demo students, instructors and cars.
+        // Demo payments and lessons go first, because they refer to the demo students, instructors and cars.
+        const demoDiscountNames = buildSeedDiscounts().map((discount) => discount.name);
+        await prisma.studentDiscount.deleteMany({
+            where: { label: { in: demoDiscountNames }, student: { nationalId: { startsWith: SEED_PREFIX } } },
+        });
+        const removedPayments = await prisma.payment.deleteMany({ where: { note: { startsWith: SEED_PAYMENT_MARK } } });
+        console.log(`Removed ${removedPayments.count} earlier demo payments.`);
         const removedLessons = await prisma.lesson.deleteMany({ where: { notes: { startsWith: SEED_LESSON_MARK } } });
         console.log(`Removed ${removedLessons.count} earlier demo lessons.`);
 
         // A demo student with a real lesson is kept, so no lesson is lost.
         const removed = await prisma.student.deleteMany({
-            where: { nationalId: { startsWith: SEED_PREFIX }, lessons: { none: {} } },
+            where: {
+                nationalId: { startsWith: SEED_PREFIX },
+                lessons: { none: {} },
+                payments: { none: {} },
+                discounts: { none: {} },
+                rates: { none: {} },
+            },
         });
 
         const students = buildSeedStudents();
@@ -75,6 +91,10 @@ async function main() {
             console.log("Rates: created an example price list (change it in Tarifs).");
         }
 
+        const rateRows = await prisma.rate.findMany();
+        const rates: Partial<Record<"driving" | "code", { mode: "per_session" | "per_hour"; amount: number; absenceFee: number }>> = {};
+        for (const row of rateRows) if (row.kind === "driving" || row.kind === "code") rates[row.kind] = row;
+
         const lessons = buildSeedLessons({
             students: await prisma.student.findMany({
                 where: { nationalId: { startsWith: SEED_PREFIX } },
@@ -93,6 +113,7 @@ async function main() {
             }),
             now: new Date(),
             timeZone: site.timeZone,
+            rates,
         });
 
         // One by one: if you already planned a real lesson at the same time, that demo lesson
@@ -108,6 +129,28 @@ async function main() {
             }
         }
         console.log(`Lessons: created ${planned}${skipped ? `, skipped ${skipped} that overlap a real lesson` : ""}.`);
+
+        // The three demo discounts, unless a discount with that name already exists, then given to some demo students.
+        const offers: Awaited<ReturnType<typeof prisma.discount.findMany>> = [];
+        for (const offer of buildSeedDiscounts()) {
+            const existing = await prisma.discount.findFirst({ where: { name: offer.name } });
+            offers.push(existing ?? (await prisma.discount.create({ data: offer })));
+        }
+        const recipients = pickDiscountRecipients(
+            lessons.filter((lesson) => lesson.status === "completed").map((lesson) => lesson.studentId),
+            offers.length,
+        );
+        const given = await prisma.studentDiscount.createMany({
+            data: recipients.map(({ studentId, discountIndex }) => {
+                const offer = offers[discountIndex];
+                return { studentId, discountId: offer.id, label: offer.name, kind: offer.kind, value: offer.value };
+            }),
+        });
+        console.log(`Discounts: ${offers.length} available, given ${given.count} times to demo students.`);
+
+        const payments = buildSeedPayments({ lessons, now: new Date(), timeZone: site.timeZone });
+        const paid = await prisma.payment.createMany({ data: payments });
+        console.log(`Payments: created ${paid.count}.`);
     } finally {
         await prisma.$disconnect();
     }

@@ -7,11 +7,15 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Icon } from "@/components/ui/Icon";
 import { requireAdmin } from "@/lib/auth";
 import { SERVICE_SOON_DAYS, serviceState } from "@/lib/cars";
+import { monthBounds } from "@/lib/bilan";
+import { studentBalances } from "@/lib/finance";
 import { formatDate } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 import { KIND_LABELS, type LessonKindValue } from "@/lib/lessons";
 import { prisma } from "@/lib/prisma";
 import { site } from "@/lib/site";
-import { formatRange, relativeDay, utcToZoned } from "@/lib/time";
+import { formatRange, relativeDay, utcToZoned, zonedTimeToUtc } from "@/lib/time";
+import { parseDateOnly } from "@/lib/validation";
 import { STATUS_LABELS, STUDENT_STATUSES, type StudentStatusValue } from "@/lib/students";
 import { btnPrimary, panel } from "@/lib/ui";
 
@@ -31,7 +35,10 @@ export default async function AdminHomePage() {
     const serviceLimit = new Date();
     serviceLimit.setDate(serviceLimit.getDate() + SERVICE_SOON_DAYS);
 
-    const [grouped, newThisMonth, recent, instructorCount, carCount, carsToService, nextLessons] = await Promise.all([
+    const schoolMonth = utcToZoned(new Date(), site.timeZone).date.slice(0, 7);
+    const bounds = monthBounds(schoolMonth);
+
+    const [grouped, newThisMonth, recent, instructorCount, carCount, carsToService, nextLessons, monthPayments, monthBilled, balances, pendingAccounts] = await Promise.all([
         prisma.student.groupBy({ by: ["status"], _count: { _all: true } }),
         prisma.student.count({ where: { createdAt: { gte: monthStart }, status: { not: "archived" } } }),
         prisma.student.findMany({
@@ -71,7 +78,25 @@ export default async function AdminHomePage() {
                 car: { select: { label: true } },
             },
         }),
+        prisma.payment.aggregate({
+            _sum: { amount: true },
+            where: { voidedAt: null, paidOn: { gte: parseDateOnly(bounds.first)!, lt: parseDateOnly(bounds.next)! } },
+        }),
+        prisma.lesson.aggregate({
+            _sum: { amount: true },
+            where: {
+                status: { in: ["completed", "no_show"] },
+                startsAt: {
+                    gte: zonedTimeToUtc(bounds.first, "00:00", site.timeZone),
+                    lt: zonedTimeToUtc(bounds.next, "00:00", site.timeZone),
+                },
+            },
+        }),
+        studentBalances(),
+        prisma.user.count({ where: { role: "user" } }),
     ]);
+    const owing = balances.filter((student) => student.balance > 0);
+    const owingTotal = owing.reduce((sum, student) => sum + student.balance, 0);
     const todayAtSchool = utcToZoned(new Date(), site.timeZone).date;
 
     const counts = Object.fromEntries(STUDENT_STATUSES.map((status) => [status, 0])) as Record<
@@ -100,6 +125,21 @@ export default async function AdminHomePage() {
                     </Link>
                 }
             />
+
+            {pendingAccounts > 0 && (
+                <Link
+                    href="/admin/comptes"
+                    className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-warn-fg/30 bg-warn-bg px-4 py-3 text-sm font-medium text-warn-fg transition-opacity hover:opacity-90"
+                >
+                    <span>
+                        {pendingAccounts} compte{pendingAccounts > 1 ? "s" : ""} en attente d’activation
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                        Voir
+                        <Icon name="arrowRight" className="size-4" />
+                    </span>
+                </Link>
+            )}
 
             <section
                 aria-label="Chiffres clés"
@@ -131,6 +171,32 @@ export default async function AdminHomePage() {
                         </div>
                     );
                 })}
+            </section>
+
+            <section
+                aria-label="Argent du mois"
+                className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3"
+            >
+                <Link href="/admin/bilan" className="bg-surface p-5 transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+                    <p className="text-sm text-muted">Encaissé ce mois-ci</p>
+                    <p className="mt-3 font-display text-3xl font-bold tracking-tight tabular-nums">
+                        {formatMoney(monthPayments._sum.amount ?? 0)}
+                    </p>
+                </Link>
+                <Link href="/admin/bilan" className="bg-surface p-5 transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+                    <p className="text-sm text-muted">Facturé ce mois-ci</p>
+                    <p className="mt-3 font-display text-3xl font-bold tracking-tight tabular-nums">
+                        {formatMoney(monthBilled._sum.amount ?? 0)}
+                    </p>
+                </Link>
+                <Link href="/admin/bilan" className="bg-surface p-5 transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+                    <p className="text-sm text-muted">
+                        {owing.length} élève{owing.length > 1 ? "s" : ""} {owing.length > 1 ? "doivent" : "doit"} de l’argent
+                    </p>
+                    <p className="mt-3 font-display text-3xl font-bold tracking-tight text-warn-fg tabular-nums">
+                        {formatMoney(owingTotal)}
+                    </p>
+                </Link>
             </section>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">

@@ -12,7 +12,9 @@ const items: Item[] = [
     { label: "Moniteurs", icon: "user", href: "/admin/moniteurs" },
     { label: "Véhicules", icon: "car", href: "/admin/vehicules" },
     { label: "Planning", icon: "calendar", href: "/admin/planning" },
+    { label: "Bilan", icon: "chart", href: "/admin/bilan" },
     { label: "Tarifs", icon: "coins", href: "/admin/tarifs" },
+    { label: "Comptes", icon: "shield", href: "/admin/comptes" },
 ];
 
 const row = "relative flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium";

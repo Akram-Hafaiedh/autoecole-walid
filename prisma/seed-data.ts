@@ -5,6 +5,7 @@
 // seed.ts finds and replaces them on a re-run, and how you can remove them by hand:
 //   DELETE FROM students WHERE national_id LIKE 'SEED-%';
 
+import { chargeLesson, type ChargeSource, type StandardRate } from "../lib/billing";
 import { addDays, utcToZoned, weekStart, weekdayOf, zonedTimeToUtc } from "../lib/time";
 
 export const SEED_PREFIX = "SEED-";
@@ -161,7 +162,7 @@ export function buildSeedCars(now: Date = new Date()): SeedCar[] {
 }
 
 // ---------------------------------------------------------------------------
-// Demo lessons: this week and next, so the planning has something to show.
+// Demo lessons: five weeks back, this week and next, so the planning and the monthly summary have something to show.
 // Notes start with "[démo]" so seed.ts can find and replace them on a re-run.
 
 export const SEED_LESSON_MARK = "[démo]";
@@ -174,6 +175,9 @@ export type SeedLesson = {
     status: "scheduled" | "completed" | "cancelled" | "no_show";
     startsAt: Date;
     endsAt: Date;
+    /** Millimes, set on done and absent lessons when a price list is given. */
+    amount: number | null;
+    chargeSource: ChargeSource | null;
     notes: string;
 };
 
@@ -198,6 +202,8 @@ export function buildSeedLessons(input: {
     cars: { id: string }[];
     now: Date;
     timeZone: string;
+    /** The standard prices by kind, to bill done lessons. Without them nothing is billed. */
+    rates?: Partial<Record<"driving" | "code", StandardRate>>;
 }): SeedLesson[] {
     const { now, timeZone } = input;
     const students = input.students.filter((student) => student.status !== "archived");
@@ -205,11 +211,11 @@ export function buildSeedLessons(input: {
     if (students.length === 0 || team.length === 0) return [];
 
     const today = utcToZoned(now, timeZone).date;
-    const start = weekStart(today);
+    const start = addDays(weekStart(today), -35);
     const lessons: SeedLesson[] = [];
     let turn = 0;
 
-    for (let offset = 0; offset < 14; offset++) {
+    for (let offset = 0; offset < 49; offset++) {
         const date = addDays(start, offset);
         team.forEach((instructor, index) => {
             // Each instructor drives their own car, so no two lessons share one.
@@ -227,6 +233,15 @@ export function buildSeedLessons(input: {
                 const needsCar = kind === "driving";
                 if (needsCar && !car) continue;
 
+                const charge = chargeLesson({
+                    status,
+                    minutes,
+                    custom: null,
+                    studentRate: null,
+                    standardRate: input.rates?.[kind] ?? null,
+                    hasPackage: false,
+                });
+
                 lessons.push({
                     studentId: students[n % students.length].id,
                     instructorId: instructor.id,
@@ -235,6 +250,8 @@ export function buildSeedLessons(input: {
                     status,
                     startsAt,
                     endsAt,
+                    amount: charge.amount,
+                    chargeSource: charge.source,
                     notes: `${SEED_LESSON_MARK} Leçon de démonstration.`,
                 });
             }
@@ -243,3 +260,95 @@ export function buildSeedLessons(input: {
     return lessons;
 }
 
+// ---------------------------------------------------------------------------
+// Demo payments, so the monthly summary and the "who owes" list have something to show.
+// Their note starts with "[démo]" so seed.ts can find and remove them on a re-run.
+
+export const SEED_PAYMENT_MARK = "[démo]";
+
+export type SeedPayment = {
+    studentId: string;
+    amount: number;
+    paidOn: Date;
+    method: "cash" | "transfer" | "cheque";
+    note: string;
+};
+
+/**
+ * Students pay in four ways, in turn: nothing yet, everything, about 60 %, and everything in
+ * two instalments. A payment is dated on a day when the student had a lesson, never in the future.
+ */
+export function buildSeedPayments(input: {
+    lessons: { studentId: string; status: string; amount: number | null; endsAt: Date }[];
+    now: Date;
+    timeZone: string;
+}): SeedPayment[] {
+    const byStudent = new Map<string, { total: number; days: string[] }>();
+    for (const lesson of input.lessons) {
+        if (lesson.status !== "completed" || lesson.amount === null || lesson.endsAt > input.now) continue;
+        const entry = byStudent.get(lesson.studentId) ?? { total: 0, days: [] };
+        entry.total += lesson.amount;
+        entry.days.push(utcToZoned(lesson.endsAt, input.timeZone).date);
+        byStudent.set(lesson.studentId, entry);
+    }
+
+    const methods = ["cash", "transfer", "cheque"] as const;
+    const payments: SeedPayment[] = [];
+    let turn = 0;
+    for (const [studentId, { total, days }] of [...byStudent].sort((a, b) => a[0].localeCompare(b[0]))) {
+        const n = turn++;
+        const day = (index: number) => new Date(`${[...days].sort()[index] ?? days[0]}T00:00:00Z`);
+        const round = (value: number) => Math.max(500, Math.round(value / 500) * 500);
+        const method = methods[n % methods.length];
+        const note = `${SEED_PAYMENT_MARK} Paiement de démonstration.`;
+
+        switch (n % 4) {
+            case 0:
+                break;
+            case 1:
+                payments.push({ studentId, amount: round(total), paidOn: day(days.length - 1), method, note });
+                break;
+            case 2:
+                payments.push({ studentId, amount: round(total * 0.6), paidOn: day(Math.floor(days.length / 2)), method, note });
+                break;
+            default: {
+                const first = round(total / 2);
+                payments.push({ studentId, amount: first, paidOn: day(0), method, note });
+                payments.push({ studentId, amount: Math.max(500, round(total) - first), paidOn: day(days.length - 1), method: "cash", note });
+            }
+        }
+    }
+    return payments;
+}
+
+// ---------------------------------------------------------------------------
+// Demo discounts. seed.ts creates one only when no discount has that name yet, so your own
+// discounts are never duplicated, and gives some to demo students.
+
+export type SeedDiscount = {
+    name: string;
+    kind: "percent" | "fixed";
+    /** A percentage (1 to 100), or millimes for a fixed amount. */
+    value: number;
+    validFrom: Date | null;
+    validTo: Date | null;
+};
+
+export function buildSeedDiscounts(now: Date = new Date()): SeedDiscount[] {
+    const day = (offset: number) => new Date(`${addDays(now.toISOString().slice(0, 10), offset)}T00:00:00Z`);
+    return [
+        { name: "Réseaux sociaux", kind: "percent", value: 10, validFrom: null, validTo: null },
+        { name: "Parrainage", kind: "fixed", value: 20000, validFrom: null, validTo: null },
+        { name: "Offre de fin d’année", kind: "percent", value: 5, validFrom: day(-10), validTo: day(60) },
+    ];
+}
+
+/** Which demo student gets which discount: about one student in four, the three offers in turn. */
+export function pickDiscountRecipients(studentIds: string[], discountCount: number): { studentId: string; discountIndex: number }[] {
+    const sorted = [...new Set(studentIds)].sort();
+    const picks: { studentId: string; discountIndex: number }[] = [];
+    sorted.forEach((studentId, i) => {
+        if (i % 4 === 2) picks.push({ studentId, discountIndex: Math.floor(i / 4) % discountCount });
+    });
+    return picks;
+}

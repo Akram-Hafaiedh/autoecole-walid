@@ -46,6 +46,7 @@ const paths = {
             <path d="m16 16 4-4-4-4M20 12H9" />
         </>
     ),
+    chart: <path d="M4 20V11M10 20V4M16 20v-6M22 20H2" />,
     chevronRight: <path d="m9 6 6 6-6 6" />,
     chevronLeft: <path d="m15 6-6 6 6 6" />,
     sun: (
