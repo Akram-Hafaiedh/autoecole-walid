@@ -179,26 +179,22 @@ body {
 /* The road centre-line: a vertical run of yellow dashes. */
 .road-line {
   width: 6px;
-  background: repeating-linear-gradient(
-    to bottom,
-    var(--accent) 0,
-    var(--accent) 36px,
-    transparent 36px,
-    transparent 72px
-  );
+  background: repeating-linear-gradient(to bottom,
+      var(--accent) 0,
+      var(--accent) 36px,
+      transparent 36px,
+      transparent 72px);
   border-radius: 3px;
 }
 
 /* The same line, lying down: a run of yellow dashes along the bottom of a panel. */
 .road-line-x {
   height: 6px;
-  background: repeating-linear-gradient(
-    to right,
-    var(--accent) 0,
-    var(--accent) 36px,
-    transparent 36px,
-    transparent 72px
-  );
+  background: repeating-linear-gradient(to right,
+      var(--accent) 0,
+      var(--accent) 36px,
+      transparent 36px,
+      transparent 72px);
   border-radius: 3px;
 }
 
@@ -206,5 +202,17 @@ body {
   * {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* On paper, always black on white, whichever theme is on screen. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
   }
 }

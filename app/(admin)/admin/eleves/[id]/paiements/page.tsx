@@ -135,11 +135,16 @@ export default async function StudentAccountPage({ params }: { params: Promise<{
                                     {payment.voidedAt ? (
                                         <Pill tone="neutral">Annulé</Pill>
                                     ) : (
-                                        <form action={voidPayment.bind(null, payment.id)}>
-                                            <button type="submit" className={btnGhost}>
-                                                Annuler
-                                            </button>
-                                        </form>
+                                        <div className="flex items-center gap-1">
+                                            <Link href={`/admin/eleves/${student.id}/paiements/${payment.id}/recu`} className={btnSecondary}>
+                                                Reçu
+                                            </Link>
+                                            <form action={voidPayment.bind(null, payment.id)}>
+                                                <button type="submit" className={btnGhost}>
+                                                    Annuler
+                                                </button>
+                                            </form>
+                                        </div>
                                     )}
                                 </li>
                             ))}

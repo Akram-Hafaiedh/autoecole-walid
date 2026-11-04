@@ -272,6 +272,12 @@ or per-kind prices for that student, and see every lesson with its billed amount
 editing the offer later changes nothing for students who already have it. The button "Calculer les prix manquants"
 prices done lessons that were saved before any price existed; lessons that already have an amount are never touched.
 
+Each payment has a **Reçu** button: a one-page receipt (school name, number `R-XXXXXXXX`, amount in figures and in
+words, method, the student's situation, a signature box). "Imprimer" opens the browser's print window, where it can
+also be saved as PDF. The sidebar is hidden on paper and the receipt is always black on white. Amount in words:
+`lib/amount-words.ts`. A cancelled payment shows a "Paiement annulé" banner. The school's address and phone on it
+come from `lib/site.ts`.
+
 ### Monthly summary
 
 `/admin/bilan` ("Bilan du mois" in the menu, `?mois=2026-11` for another month): lessons done, hours, absences and

@@ -5,12 +5,12 @@ What the project does not have yet, most important first. Tick a box when it is 
 ## Next, in this order
 
 1. [x] **Public pages redesign.** Bring the public site up to the look of the login page and the dashboard.
-2. [ ] **Payments.** What is left: a printable receipt.
+2. [x] **Payments.**
     - [x] Price list, discounts and a price per lesson (Tarifs page)
     - [x] Payments, discounts and prices per student (`/admin/eleves/[id]/paiements`)
     - [x] Monthly summary and money figures on the dashboard (`/admin/bilan`)
     - [x] Year view of the summary (`/admin/bilan?vue=annee`)
-    - [ ] Printable receipt for a payment
+    - [x] Printable receipt for a payment ("Reçu" next to each payment)
 3. [ ] **Student profile.** What is left: hours needed against hours done, and the steps of the licence.
     - [x] Overview at the top of the student page (hours driven, code sessions, next lesson, balance)
     - [x] Every lesson with its amount (`/admin/eleves/[id]/paiements`)

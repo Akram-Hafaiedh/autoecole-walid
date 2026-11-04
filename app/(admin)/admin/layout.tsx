@@ -21,7 +21,7 @@ export default async function AdminLayout({
 
     return (
         <div className="flex flex-1 flex-col md:flex-row">
-            <aside className="bg-sidebar text-sidebar-ink md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col">
+            <aside className="bg-sidebar text-sidebar-ink print:hidden md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col">
                 <div className="flex items-center justify-between px-4 py-4 md:px-5 md:py-6">
                     <Link href="/admin" className="rounded-md focus-visible:outline-2 focus-visible:outline-accent">
                         <Logo />
@@ -61,7 +61,7 @@ export default async function AdminLayout({
                 </div>
             </aside>
 
-            <div className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:px-10 md:py-10">
+            <div className="min-w-0 flex-1 px-4 py-6 sm:px-8 md:px-10 md:py-10 print:p-0">
                 <div className="mx-auto max-w-[88rem]">{children}</div>
             </div>
         </div>
