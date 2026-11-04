@@ -44,3 +44,23 @@ export async function updateStudent(
     revalidatePath("/admin/eleves");
     redirect("/admin/eleves");
 }
+
+/** Puts a student away: hidden from the list, with their lessons and payments kept. */
+export async function archiveStudent(id: string): Promise<void> {
+    await requireAdmin();
+    if (!isUuid(id)) return;
+
+    await prisma.student.updateMany({ where: { id }, data: { status: "archived" } });
+    revalidatePath("/admin/eleves");
+    redirect("/admin/eleves");
+}
+
+/** Brings an archived student back, as an active student. */
+export async function restoreStudent(id: string): Promise<void> {
+    await requireAdmin();
+    if (!isUuid(id)) return;
+
+    await prisma.student.updateMany({ where: { id, status: "archived" }, data: { status: "active" } });
+    revalidatePath("/admin/eleves");
+    revalidatePath(`/admin/eleves/${id}`);
+}

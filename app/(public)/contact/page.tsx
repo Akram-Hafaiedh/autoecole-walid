@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { ContactForm } from "@/components/public/ContactForm";
 import { PageIntro } from "@/components/public/PageIntro";
 import { site } from "@/lib/site";
 import { panel } from "@/lib/ui";
@@ -21,10 +22,11 @@ export default function ContactPage() {
     return (
         <>
             <PageIntro eyebrow="Contact" title="Parlons de votre permis">
-                Le plus simple est de nous appeler ou de nous écrire sur WhatsApp.
+                Le plus simple est de nous appeler ou de nous écrire sur WhatsApp. Vous préférez être rappelé ? Laissez-nous votre numéro.
             </PageIntro>
 
             <section className="mx-auto grid max-w-6xl gap-6 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-[1.2fr_1fr]">
+                <div className="flex flex-col gap-6">
                 <ul className="flex flex-col gap-4">
                     {ways.map((way) => (
                         <li key={way.label}>
@@ -50,8 +52,11 @@ export default function ContactPage() {
                         </li>
                     ))}
                 </ul>
+                <ContactForm />
+                </div>
 
                 <div className="flex flex-col gap-6">
+
                     <section className={`${panel} p-6`}>
                         <h2 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
                             <Icon name="clock" className="size-5 text-brand" />

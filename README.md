@@ -278,6 +278,15 @@ also be saved as PDF. The sidebar is hidden on paper and the receipt is always b
 `lib/amount-words.ts`. A cancelled payment shows a "Paiement annulé" banner. The school's address and phone on it
 come from `lib/site.ts`.
 
+### Requests from the contact form
+
+The public `/contact` page has an "Être rappelé" form (name, phone, optional e-mail, what interests them, a message).
+It stores a request in the `prospects` table. The owner follows them on `/admin/demandes` ("Demandes" in the menu, and a
+banner on the dashboard when new ones wait): mark as contacted, enrolled or closed, or "Créer l'élève", which opens the new
+student form already filled with the name, phone, e-mail and message. The form is open to everyone, so it has three guards: a
+hidden field that only robots fill in, the same phone number cannot send twice within 10 minutes, and at most 30 requests an
+hour for the whole site (`lib/prospects.ts`). Rules in `lib/prospects.ts`, action in `actions/prospects.ts`.
+
 ### Monthly summary
 
 `/admin/bilan` ("Bilan du mois" in the menu, `?mois=2026-11` for another month): lessons done, hours, absences and

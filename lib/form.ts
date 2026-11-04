@@ -6,6 +6,8 @@ export type FormState<Field extends string> = {
     message?: string;
     /** What the user typed, so a failed submit does not wipe the form. */
     values?: Partial<Record<Field, string>>;
+    /** The form was sent: the page replaces it with a thank-you (the public contact form). */
+    sent?: boolean;
 };
 
 /** Reads the named fields from a submitted form as trimmed text. */

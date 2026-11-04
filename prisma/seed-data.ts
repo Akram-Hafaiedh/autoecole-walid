@@ -352,3 +352,59 @@ export function pickDiscountRecipients(studentIds: string[], discountCount: numb
     });
     return picks;
 }
+
+// ---------------------------------------------------------------------------
+// Demo requests from the contact form. Their message starts with "[démo]" so seed.ts can
+// remove them on a re-run.
+
+export const SEED_PROSPECT_MARK = "[démo]";
+
+export type SeedProspect = {
+    name: string;
+    phone: string;
+    email: string | null;
+    interest: string | null;
+    message: string;
+    status: "received" | "contacted" | "enrolled" | "closed";
+    archivedAt: Date | null;
+    createdAt: Date;
+};
+
+const PROSPECT_FIRST = ["Rim", "Hamza", "Sarra", "Nizar", "Ines", "Yassine", "Amel", "Karim", "Mariem", "Oussema", "Hela", "Anis", "Dorra", "Marwen", "Nour", "Slim", "Emna", "Walid", "Ghada", "Fares"];
+const PROSPECT_LAST = ["Jlassi", "Mrad", "Gharbi", "Ayari", "Zouari", "Trabelsi", "Haddad", "Ben Salah", "Mansouri", "Belhadj", "Sassi", "Khelifi", "Dridi", "Bouazizi", "Chaabane"];
+const PROSPECT_MESSAGES = [
+    "Je voudrais passer mon permis B cet hiver.",
+    "J’ai déjà le code, il me faut seulement des leçons.",
+    "Quels sont vos horaires de cours de code ?",
+    "Je rappellerai plus tard, merci.",
+    "Prêt à m’inscrire cette semaine.",
+    "Combien coûte le forfait complet ?",
+    "Est-ce que vous avez des voitures automatiques ?",
+    "Je travaille la journée, avez-vous des leçons le soir ?",
+    "",
+    "Mon fils a 18 ans et veut commencer le code.",
+];
+const PROSPECT_STATUS_CYCLE: SeedProspect["status"][] = ["received", "received", "contacted", "contacted", "enrolled", "closed", "received", "contacted"];
+const PROSPECT_INTERESTS = ["complet", "conduite", "code", null];
+
+/** About 50 requests over the last two months: every status, some archived, with and without e-mail. */
+export function buildSeedProspects(now: Date = new Date(), count = 50): SeedProspect[] {
+    const mark = (text: string) => `${SEED_PROSPECT_MARK} ${text}`.trim();
+    return Array.from({ length: count }, (_, i) => {
+        const first = PROSPECT_FIRST[i % PROSPECT_FIRST.length];
+        const last = PROSPECT_LAST[(i * 7) % PROSPECT_LAST.length];
+        const createdAt = new Date(now.getTime() - (3 + i * 29) * 3_600_000);
+        const status = PROSPECT_STATUS_CYCLE[i % PROSPECT_STATUS_CYCLE.length];
+        return {
+            name: `${first} ${last}`,
+            phone: `${[22, 29, 50, 55, 98][i % 5]} ${String(100 + ((i * 37) % 900))} ${String(100 + ((i * 53) % 900))}`,
+            email: i % 3 === 0 ? `${first.toLowerCase()}.${i}@example.invalid` : null,
+            interest: PROSPECT_INTERESTS[i % PROSPECT_INTERESTS.length],
+            message: mark(PROSPECT_MESSAGES[i % PROSPECT_MESSAGES.length]),
+            status,
+            // Every ninth request, and the old closed ones, are archived.
+            archivedAt: i % 9 === 8 || (status === "closed" && i > 20) ? new Date(createdAt.getTime() + 24 * 3_600_000) : null,
+            createdAt,
+        };
+    });
+}

@@ -61,7 +61,7 @@ export function StudentForm({ action, initial, submitLabel }: Props) {
                     name="status"
                     label="Statut"
                     error={error("status")}
-                    hint="Passez à « Archivé » pour retirer l’élève de la liste."
+                    hint="« Archivé » retire l’élève de la liste. Le bouton Archiver de sa fiche fait la même chose."
                 >
                     <select {...props("status")}>
                         {STUDENT_STATUSES.map((status) => (

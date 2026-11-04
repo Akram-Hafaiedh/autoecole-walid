@@ -38,7 +38,7 @@ export default async function AdminHomePage() {
     const schoolMonth = utcToZoned(new Date(), site.timeZone).date.slice(0, 7);
     const bounds = monthBounds(schoolMonth);
 
-    const [grouped, newThisMonth, recent, instructorCount, carCount, carsToService, nextLessons, monthPayments, monthBilled, balances, pendingAccounts] = await Promise.all([
+    const [grouped, newThisMonth, recent, instructorCount, carCount, carsToService, nextLessons, monthPayments, monthBilled, balances, pendingAccounts, newRequests] = await Promise.all([
         prisma.student.groupBy({ by: ["status"], _count: { _all: true } }),
         prisma.student.count({ where: { createdAt: { gte: monthStart }, status: { not: "archived" } } }),
         prisma.student.findMany({
@@ -94,6 +94,7 @@ export default async function AdminHomePage() {
         }),
         studentBalances(),
         prisma.user.count({ where: { role: "user" } }),
+        prisma.prospect.count({ where: { status: "received", archivedAt: null } }),
     ]);
     const owing = balances.filter((student) => student.balance > 0);
     const owingTotal = owing.reduce((sum, student) => sum + student.balance, 0);
@@ -125,6 +126,21 @@ export default async function AdminHomePage() {
                     </Link>
                 }
             />
+
+            {newRequests > 0 && (
+                <Link
+                    href="/admin/demandes"
+                    className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-info-fg/30 bg-info-bg px-4 py-3 text-sm font-medium text-info-fg transition-opacity hover:opacity-90"
+                >
+                    <span>
+                        {newRequests} nouvelle{newRequests > 1 ? "s" : ""} demande{newRequests > 1 ? "s" : ""} à rappeler
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                        Voir
+                        <Icon name="arrowRight" className="size-4" />
+                    </span>
+                </Link>
+            )}
 
             {pendingAccounts > 0 && (
                 <Link

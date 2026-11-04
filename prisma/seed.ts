@@ -14,12 +14,14 @@ import {
     SEED_INSTRUCTOR_DOMAIN,
     SEED_LESSON_MARK,
     SEED_PAYMENT_MARK,
+    SEED_PROSPECT_MARK,
     SEED_PREFIX,
     buildSeedCars,
     buildSeedDiscounts,
     buildSeedInstructors,
     buildSeedLessons,
     buildSeedPayments,
+    buildSeedProspects,
     buildSeedStudents,
     pickDiscountRecipients,
 } from "./seed-data";
@@ -39,6 +41,7 @@ async function main() {
         await prisma.studentDiscount.deleteMany({
             where: { label: { in: demoDiscountNames }, student: { nationalId: { startsWith: SEED_PREFIX } } },
         });
+        await prisma.prospect.deleteMany({ where: { message: { startsWith: SEED_PROSPECT_MARK } } });
         const removedPayments = await prisma.payment.deleteMany({ where: { note: { startsWith: SEED_PAYMENT_MARK } } });
         console.log(`Removed ${removedPayments.count} earlier demo payments.`);
         const removedLessons = await prisma.lesson.deleteMany({ where: { notes: { startsWith: SEED_LESSON_MARK } } });
@@ -147,6 +150,9 @@ async function main() {
             }),
         });
         console.log(`Discounts: ${offers.length} available, given ${given.count} times to demo students.`);
+
+        const requests = await prisma.prospect.createMany({ data: buildSeedProspects() });
+        console.log(`Requests: created ${requests.count} demo requests from the contact form.`);
 
         const payments = buildSeedPayments({ lessons, now: new Date(), timeZone: site.timeZone });
         const paid = await prisma.payment.createMany({ data: payments });

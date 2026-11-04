@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updateStudent } from "@/actions/students";
+import { archiveStudent, restoreStudent, updateStudent } from "@/actions/students";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusPill } from "@/components/students/StatusPill";
@@ -12,7 +12,7 @@ import { accountSummary } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { profileStats } from "@/lib/profile";
 import { formatDate, isUuid, toDateInput } from "@/lib/format";
-import { btnSecondary } from "@/lib/ui";
+import { btnGhost, btnPrimary, btnSecondary } from "@/lib/ui";
 import type { StudentStatusValue } from "@/lib/students";
 
 export const metadata: Metadata = { title: "Fiche élève" };
@@ -54,9 +54,24 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
                 }
                 title={`${student.firstName} ${student.lastName}`}
                 actions={
-                    <Link href={`/admin/eleves/${student.id}/paiements`} className={btnSecondary}>
-                        Paiements et leçons
-                    </Link>
+                    <>
+                        <Link href={`/admin/eleves/${student.id}/paiements`} className={btnSecondary}>
+                            Paiements et leçons
+                        </Link>
+                        {student.status === "archived" ? (
+                            <form action={restoreStudent.bind(null, student.id)}>
+                                <button type="submit" className={btnPrimary}>
+                                    Restaurer
+                                </button>
+                            </form>
+                        ) : (
+                            <form action={archiveStudent.bind(null, student.id)}>
+                                <button type="submit" className={btnGhost}>
+                                    Archiver
+                                </button>
+                            </form>
+                        )}
+                    </>
                 }
                 description={
                     <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">

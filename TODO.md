@@ -17,7 +17,9 @@ What the project does not have yet, most important first. Tick a box when it is 
     - [ ] Hours needed per licence category, and progress against it (the owner gives the numbers)
     - [ ] Steps of the licence (code exam, driving exam) with dates
 4. [x] **"Comptes" page** (`/admin/comptes`). Activate or remove registered accounts from the dashboard. Roles beyond "admin" are under Roles below.
-5. [ ] **Public site content and contact form.** Real hours, prices, photos and address in `lib/site.ts`, plus a form that creates a prospect the owner can follow up.
+5. [ ] **Public site.** What is left: the real content, which only Walid can give.
+    - [x] Contact form that creates a request, and the follow-up page (`/admin/demandes`)
+    - [ ] Real hours, prices, photos and address in `lib/site.ts`
 6. [ ] **SMS or WhatsApp reminders** about lessons. Last, because it needs a paid messaging service.
 
 ## Running the school

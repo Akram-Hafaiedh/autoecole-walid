@@ -219,25 +219,25 @@ model RateLimit {
 }
 
 model Lesson {
-  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId    String       @map("student_id") @db.Uuid
-  instructorId String       @map("instructor_id") @db.Uuid
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId       String        @map("student_id") @db.Uuid
+  instructorId    String        @map("instructor_id") @db.Uuid
   /// Null for code lessons. Required for driving lessons (checked in constraints.sql).
-  carId        String?      @map("car_id") @db.Uuid
-  kind         LessonKind   @default(driving)
-  status       LessonStatus @default(scheduled)
-  startsAt     DateTime     @map("starts_at") @db.Timestamptz(6)
-  endsAt       DateTime     @map("ends_at") @db.Timestamptz(6)
-  notes        String?
+  carId           String?       @map("car_id") @db.Uuid
+  kind            LessonKind    @default(driving)
+  status          LessonStatus  @default(scheduled)
+  startsAt        DateTime      @map("starts_at") @db.Timestamptz(6)
+  endsAt          DateTime      @map("ends_at") @db.Timestamptz(6)
+  notes           String?
   /// A price set on this one lesson. Both are set together, or both are empty.
-  customPriceMode PriceMode? @map("custom_price_mode")
+  customPriceMode PriceMode?    @map("custom_price_mode")
   /// In millimes: per session, or per hour.
-  customPrice     Int?       @map("custom_price")
+  customPrice     Int?          @map("custom_price")
   /// What the lesson is billed, in millimes. Set when it is marked done or absent, then kept.
   amount          Int?
   chargeSource    ChargeSource? @map("charge_source")
-  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   student    Student    @relation(fields: [studentId], references: [id])
   instructor Instructor @relation(fields: [instructorId], references: [id])
@@ -327,4 +327,33 @@ model Payment {
 
   @@index([studentId, paidOn])
   @@map("payments")
+}
+
+/// Where a request from the public contact form stands. The owner moves it along.
+enum ProspectStatus {
+  received
+  contacted
+  enrolled
+  closed
+
+  @@map("prospect_status")
+}
+
+/// A request sent from the public site's contact form: someone who may become a student.
+model Prospect {
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  phone      String
+  email      String?
+  /// An offer id from lib/site.ts (code, conduite or complet), or empty.
+  interest   String?
+  message    String?
+  status     ProspectStatus @default(received)
+  /// Set when the owner puts the request away. It keeps its status and can be restored.
+  archivedAt DateTime?      @map("archived_at") @db.Timestamptz(6)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, createdAt])
+  @@map("prospects")
 }
