@@ -9,9 +9,10 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 ALTER TABLE "lessons"
   ADD CONSTRAINT lessons_ends_after_start CHECK (ends_at > starts_at);
 
--- A driving lesson needs a car. Code and exam lessons do not.
+-- A driving or refresher lesson needs a car. Code and exam lessons do not.
+-- (kind is compared as text so the constraint can be added in the same migration as a new kind.)
 ALTER TABLE "lessons"
-  ADD CONSTRAINT lessons_driving_needs_car CHECK (kind <> 'driving' OR car_id IS NOT NULL);
+  ADD CONSTRAINT lessons_driving_needs_car CHECK (kind::text NOT IN ('driving', 'refresher') OR car_id IS NOT NULL);
 
 -- No overlapping lessons for the same instructor, the same car or the same student.
 -- Cancelled lessons free their slot. Back-to-back lessons are allowed.

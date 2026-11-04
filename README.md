@@ -114,7 +114,8 @@ When a lesson would overlap another one for the same instructor, car or student,
 the form says which one is busy and from when to when. The database enforces the
 same rule (`prisma/constraints.sql`), so two people saving at the same moment cannot
 both get through. A cancelled lesson frees its slot. A code lesson never has a car,
-a driving lesson always has one, an exam may have one. Lessons are cancelled, not
+a driving lesson and a refresher lesson ("Recyclage": someone who already has a licence but has not driven for a long
+time) always have one, an exam may have one. A refresher lesson has its own price in Tarifs. Lessons are cancelled, not
 deleted: set the status to "Annulée".
 
 ## Before the site goes live

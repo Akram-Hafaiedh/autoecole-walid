@@ -3,14 +3,14 @@
 
 export type ProfileLesson = {
     id: string;
-    kind: "driving" | "code" | "exam";
+    kind: "driving" | "code" | "exam" | "refresher";
     status: "scheduled" | "completed" | "cancelled" | "no_show";
     startsAt: Date;
     endsAt: Date;
 };
 
 export type ProfileStats = {
-    /** Minutes of driving lessons marked done. */
+    /** Minutes of driving and refresher lessons marked done. */
     drivingMinutes: number;
     drivingDone: number;
     codeDone: number;
@@ -28,7 +28,8 @@ export function profileStats(lessons: ProfileLesson[], now: Date): ProfileStats 
 
     for (const lesson of lessons) {
         if (lesson.status === "completed") {
-            if (lesson.kind === "driving") {
+            // A refresher lesson is driving time too.
+            if (lesson.kind === "driving" || lesson.kind === "refresher") {
                 drivingDone += 1;
                 drivingMinutes += Math.round((lesson.endsAt.getTime() - lesson.startsAt.getTime()) / 60_000);
             } else if (lesson.kind === "code") codeDone += 1;

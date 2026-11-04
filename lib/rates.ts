@@ -20,6 +20,7 @@ export const DEFAULT_MODES: Record<LessonKindValue, PriceMode> = {
     driving: "per_hour",
     code: "per_session",
     exam: "per_session",
+    refresher: "per_hour",
 };
 
 export type RateRow = { kind: LessonKindValue; mode: PriceMode; amount: number; absenceFee: number };

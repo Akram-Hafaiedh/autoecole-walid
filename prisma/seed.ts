@@ -94,9 +94,13 @@ async function main() {
             console.log("Rates: created an example price list (change it in Tarifs).");
         }
 
+        // The refresher price is added to an existing price list too, so the demo lessons are billed.
+        if (!(await prisma.rate.findUnique({ where: { kind: "refresher" } }))) {
+            await prisma.rate.create({ data: { kind: "refresher", mode: "per_hour", amount: 25000, absenceFee: 0 } });
+        }
         const rateRows = await prisma.rate.findMany();
-        const rates: Partial<Record<"driving" | "code", { mode: "per_session" | "per_hour"; amount: number; absenceFee: number }>> = {};
-        for (const row of rateRows) if (row.kind === "driving" || row.kind === "code") rates[row.kind] = row;
+        const rates: Partial<Record<"driving" | "code" | "refresher", { mode: "per_session" | "per_hour"; amount: number; absenceFee: number }>> = {};
+        for (const row of rateRows) if (row.kind === "driving" || row.kind === "code" || row.kind === "refresher") rates[row.kind] = row;
 
         const lessons = buildSeedLessons({
             students: await prisma.student.findMany({

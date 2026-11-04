@@ -171,7 +171,7 @@ export type SeedLesson = {
     studentId: string;
     instructorId: string;
     carId: string | null;
-    kind: "driving" | "code";
+    kind: "driving" | "code" | "refresher";
     status: "scheduled" | "completed" | "cancelled" | "no_show";
     startsAt: Date;
     endsAt: Date;
@@ -181,7 +181,7 @@ export type SeedLesson = {
     notes: string;
 };
 
-type Slot = readonly [start: string, minutes: number, kind: "driving" | "code"];
+type Slot = readonly [start: string, minutes: number, kind: "driving" | "code" | "refresher"];
 
 // A day for one instructor: start time, length in minutes, type. Short and long lessons,
 // early starts, an evening, back-to-back lessons and a full 8-hour day all appear.
@@ -189,7 +189,7 @@ const DAYS: Record<string, readonly Slot[]> = {
     regular: [["08:00", 120, "driving"], ["10:30", 60, "driving"], ["14:00", 180, "driving"]],
     early: [["06:00", 120, "driving"], ["09:00", 120, "code"], ["16:00", 240, "driving"]],
     long: [["09:00", 480, "driving"]],
-    short: [["08:00", 60, "driving"], ["09:00", 60, "driving"], ["10:00", 60, "driving"], ["18:00", 120, "driving"]],
+    short: [["08:00", 60, "driving"], ["09:00", 60, "driving"], ["10:00", 60, "driving"], ["18:00", 120, "refresher"]],
     off: [],
 };
 
@@ -203,7 +203,7 @@ export function buildSeedLessons(input: {
     now: Date;
     timeZone: string;
     /** The standard prices by kind, to bill done lessons. Without them nothing is billed. */
-    rates?: Partial<Record<"driving" | "code", StandardRate>>;
+    rates?: Partial<Record<"driving" | "code" | "refresher", StandardRate>>;
 }): SeedLesson[] {
     const { now, timeZone } = input;
     const students = input.students.filter((student) => student.status !== "archived");
@@ -230,7 +230,7 @@ export function buildSeedLessons(input: {
                 if (endsAt.getTime() < now.getTime()) status = n % 11 === 7 ? "no_show" : n % 7 === 3 ? "cancelled" : "completed";
                 else if (n % 17 === 5) status = "cancelled";
 
-                const needsCar = kind === "driving";
+                const needsCar = kind !== "code";
                 if (needsCar && !car) continue;
 
                 const charge = chargeLesson({

@@ -10,7 +10,7 @@ export type PlannedLesson = {
     date: string;
     startMin: number;
     endMin: number;
-    kind: "driving" | "code" | "exam";
+    kind: "driving" | "code" | "exam" | "refresher";
     status: "scheduled" | "completed" | "cancelled" | "no_show";
     studentName: string;
     instructorId: string;

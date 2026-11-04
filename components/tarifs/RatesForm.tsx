@@ -13,6 +13,7 @@ const KIND_HINTS = {
     driving: "Leçons de conduite avec un moniteur et un véhicule.",
     code: "Cours et séries de code.",
     exam: "Accompagnement le jour de l’examen.",
+    refresher: "Remise à niveau pour quelqu’un qui a déjà son permis mais n’a pas conduit depuis longtemps.",
 } as const;
 
 export function RatesForm({ initial }: { initial: Record<RateField, string> }) {

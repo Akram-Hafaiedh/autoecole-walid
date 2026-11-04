@@ -201,7 +201,7 @@ export function LessonForm({
                         error={error("carId")}
                         hint={kind === "exam" ? "Facultatif pour un examen." : undefined}
                     >
-                        <select {...props("carId")} required={kind === "driving"}>
+                        <select {...props("carId")} required={kind === "driving" || kind === "refresher"}>
                             <option value="">Choisir un véhicule…</option>
                             {cars.map((car) => (
                                 <option key={car.id} value={car.id}>

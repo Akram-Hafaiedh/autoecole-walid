@@ -12,13 +12,14 @@ import { parseMoney } from "@/lib/money";
 import { parseTime, zonedTimeToUtc } from "@/lib/time";
 import { parseDateOnly } from "@/lib/validation";
 
-export const LESSON_KINDS = ["driving", "code", "exam"] as const;
+export const LESSON_KINDS = ["driving", "code", "exam", "refresher"] as const;
 export type LessonKindValue = (typeof LESSON_KINDS)[number];
 
 export const KIND_LABELS: Record<LessonKindValue, string> = {
     driving: "Conduite",
     code: "Code",
     exam: "Examen",
+    refresher: "Recyclage",
 };
 
 export const LESSON_STATUSES = ["scheduled", "completed", "cancelled", "no_show"] as const;
@@ -104,12 +105,14 @@ export function parseLessonForm(formData: FormData, timeZone: string): LessonPar
     const kindOk = (LESSON_KINDS as readonly string[]).includes(v.kind);
     if (!kindOk) errors.kind = "Choisissez un type de leçon.";
 
-    // A code lesson never has a car. A driving lesson always does. An exam may have one.
+    // A code lesson never has a car. A driving or refresher lesson always does. An exam may have one.
     let carId: string | null = null;
     if (kindOk && v.kind !== "code") {
         if (v.carId && !isUuid(v.carId)) errors.carId = "Véhicule invalide.";
         else if (v.carId) carId = v.carId;
-        else if (v.kind === "driving") errors.carId = "Choisissez un véhicule pour une leçon de conduite.";
+        else if (v.kind === "driving" || v.kind === "refresher") {
+            errors.carId = `Choisissez un véhicule pour ${v.kind === "refresher" ? "un recyclage" : "une leçon de conduite"}.`;
+        }
     }
 
     const status = v.status || "scheduled";

@@ -5,4 +5,5 @@ export const kindStyles: Record<LessonKindValue, { block: string; dot: string }>
     driving: { block: "border-brand bg-brand-soft text-brand-ink", dot: "bg-brand" },
     code: { block: "border-info-fg bg-info-bg text-info-fg", dot: "bg-info-fg" },
     exam: { block: "border-accent bg-warn-bg text-warn-fg", dot: "bg-accent" },
+    refresher: { block: "border-tone-4-fg bg-tone-4-bg text-tone-4-fg", dot: "bg-tone-4-fg" },
 };

@@ -27,6 +27,8 @@ enum LessonKind {
   driving
   code
   exam
+  /// Refresher lessons for someone who already has a licence but has not driven for a long time.
+  refresher
 
   @@map("lesson_kind")
 }
@@ -222,7 +224,7 @@ model Lesson {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId       String        @map("student_id") @db.Uuid
   instructorId    String        @map("instructor_id") @db.Uuid
-  /// Null for code lessons. Required for driving lessons (checked in constraints.sql).
+  /// Null for code lessons. Required for driving and refresher lessons (checked in constraints.sql).
   carId           String?       @map("car_id") @db.Uuid
   kind            LessonKind    @default(driving)
   status          LessonStatus  @default(scheduled)
