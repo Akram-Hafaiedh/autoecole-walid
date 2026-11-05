@@ -42,6 +42,34 @@ export function InstructorForm({ action, initial, submitLabel }: Props) {
                 </Field>
             </Section>
 
+            <Section title="Ce qu’il enseigne">
+                <fieldset className="sm:col-span-2">
+                    <legend className="sr-only">Ce qu’il enseigne</legend>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                        <label className="flex items-center gap-2 text-sm">
+                            <input
+                                type="checkbox"
+                                name="teachesCode"
+                                defaultChecked={(state.values?.teachesCode ?? initial.teachesCode) === "on"}
+                                className="size-4 accent-brand"
+                            />
+                            Le code
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                            <input
+                                type="checkbox"
+                                name="teachesDriving"
+                                defaultChecked={(state.values?.teachesDriving ?? initial.teachesDriving) === "on"}
+                                className="size-4 accent-brand"
+                            />
+                            La conduite (leçons, examens, recyclage)
+                        </label>
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted">Le planning ne propose le moniteur que pour ce qu’il enseigne.</p>
+                    {error("teachesCode") && <p className="mt-1.5 text-xs font-medium text-danger">{error("teachesCode")}</p>}
+                </fieldset>
+            </Section>
+
             <Section title="Statut">
                 <Field
                     name="status"

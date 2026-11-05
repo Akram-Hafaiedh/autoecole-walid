@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Pill } from "@/components/ui/Pill";
 import { requireAdmin } from "@/lib/auth";
+import { teachesLabel } from "@/lib/instructors";
 import { prisma } from "@/lib/prisma";
 import { btnPrimary } from "@/lib/ui";
 
@@ -23,6 +24,8 @@ export default async function InstructorsPage() {
             phone: true,
             email: true,
             active: true,
+            teachesCode: true,
+            teachesDriving: true,
             _count: {
                 select: { lessons: { where: { startsAt: { gte: new Date() }, status: "scheduled" as const } } },
             },
@@ -88,7 +91,9 @@ export default async function InstructorsPage() {
                                     </Pill>
                                 </div>
 
-                                <dl className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3 text-sm">
+                                <p className="mt-3 text-sm text-muted">{teachesLabel(instructor)}</p>
+
+                                <dl className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3 text-sm">
                                     <div className="min-w-0">
                                         <dt className="sr-only">E-mail</dt>
                                         <dd className="truncate text-muted">{instructor.email ?? "Pas d’e-mail"}</dd>

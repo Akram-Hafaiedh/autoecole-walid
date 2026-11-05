@@ -11,7 +11,7 @@ export const INSTRUCTOR_STATUS_LABELS: Record<InstructorStatusValue, string> = {
     inactive: "Inactif",
 };
 
-export type InstructorField = "firstName" | "lastName" | "phone" | "email" | "status";
+export type InstructorField = "firstName" | "lastName" | "phone" | "email" | "status" | "teachesCode" | "teachesDriving";
 export type InstructorFormState = FormState<InstructorField>;
 
 export type InstructorInput = {
@@ -20,13 +20,26 @@ export type InstructorInput = {
     phone: string | null;
     email: string | null;
     active: boolean;
+    teachesCode: boolean;
+    teachesDriving: boolean;
 };
 
 export type InstructorParseResult =
     | { ok: true; data: InstructorInput }
     | { ok: false; errors: NonNullable<InstructorFormState["errors"]>; values: NonNullable<InstructorFormState["values"]> };
 
-const FIELDS: readonly InstructorField[] = ["firstName", "lastName", "phone", "email", "status"];
+const FIELDS: readonly InstructorField[] = ["firstName", "lastName", "phone", "email", "status", "teachesCode", "teachesDriving"];
+
+/** What an instructor teaches, in words. */
+export function teachesLabel(teaches: { teachesCode: boolean; teachesDriving: boolean }): string {
+    if (teaches.teachesCode && teaches.teachesDriving) return "Code et conduite";
+    return teaches.teachesCode ? "Code seulement" : "Conduite seulement";
+}
+
+/** Can this instructor give this type of lesson? Exams and refreshers are driving. */
+export function canTeach(teaches: { teachesCode: boolean; teachesDriving: boolean }, kind: string): boolean {
+    return kind === "code" ? teaches.teachesCode : teaches.teachesDriving;
+}
 
 export function parseInstructorForm(formData: FormData): InstructorParseResult {
     const v = readFields(formData, FIELDS);
@@ -43,6 +56,8 @@ export function parseInstructorForm(formData: FormData): InstructorParseResult {
 
     if (!(INSTRUCTOR_STATUSES as readonly string[]).includes(v.status)) errors.status = "Statut invalide.";
 
+    if (v.teachesCode !== "on" && v.teachesDriving !== "on") errors.teachesCode = "Cochez au moins une des deux : code ou conduite.";
+
     if (Object.keys(errors).length > 0) return { ok: false, errors, values: v };
 
     return {
@@ -53,6 +68,8 @@ export function parseInstructorForm(formData: FormData): InstructorParseResult {
             phone: v.phone || null,
             email: v.email || null,
             active: v.status === "active",
+            teachesCode: v.teachesCode === "on",
+            teachesDriving: v.teachesDriving === "on",
         },
     };
 }

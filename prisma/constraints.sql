@@ -32,6 +32,10 @@ ALTER TABLE "lessons"
     student_id WITH =, tstzrange(starts_at, ends_at) WITH &&
   ) WHERE (status <> 'cancelled');
 
+-- An instructor teaches the code, the driving, or both. Never nothing.
+ALTER TABLE "instructors"
+  ADD CONSTRAINT instructors_teaches_something CHECK (teaches_code OR teaches_driving);
+
 -- Nobody can read these tables with a public (anon) key. The app reads and writes
 -- through the server, after checking that the visitor is logged in.
 ALTER TABLE "students"    ENABLE ROW LEVEL SECURITY;

@@ -115,6 +115,9 @@ model Instructor {
   phone      String?
   email      String?
   active     Boolean  @default(true)
+  /// What this instructor teaches. At least one is true (CHECK in constraints.sql).
+  teachesCode    Boolean @default(true) @map("teaches_code")
+  teachesDriving Boolean @default(true) @map("teaches_driving")
   /// Link to the login account once auth exists.
   authUserId String?  @unique @map("auth_user_id") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

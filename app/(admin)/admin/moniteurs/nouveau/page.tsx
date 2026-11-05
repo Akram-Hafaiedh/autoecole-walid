@@ -19,7 +19,7 @@ export default async function NewInstructorPage() {
             <InstructorForm
                 action={createInstructor}
                 submitLabel="Ajouter le moniteur"
-                initial={{ firstName: "", lastName: "", phone: "", email: "", status: "active" }}
+                initial={{ firstName: "", lastName: "", phone: "", email: "", status: "active", teachesCode: "on", teachesDriving: "on" }}
             />
         </>
     );

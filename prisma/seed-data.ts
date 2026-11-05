@@ -120,14 +120,16 @@ export type SeedInstructor = {
     phone: string;
     email: string;
     active: boolean;
+    teachesCode: boolean;
+    teachesDriving: boolean;
 };
 
 export function buildSeedInstructors(): SeedInstructor[] {
     const people = [
-        { firstName: "Walid", lastName: "Ben Amor", active: true },
-        { firstName: "Slim", lastName: "Gharbi", active: true },
-        { firstName: "Nadia", lastName: "Hamdi", active: true },
-        { firstName: "Moez", lastName: "Jebali", active: false },
+        { firstName: "Walid", lastName: "Ben Amor", active: true, teachesCode: true, teachesDriving: true },
+        { firstName: "Slim", lastName: "Gharbi", active: true, teachesCode: true, teachesDriving: true },
+        { firstName: "Nadia", lastName: "Hamdi", active: true, teachesCode: true, teachesDriving: true },
+        { firstName: "Moez", lastName: "Jebali", active: false, teachesCode: true, teachesDriving: false },
     ];
     return people.map((person, i) => ({
         ...person,

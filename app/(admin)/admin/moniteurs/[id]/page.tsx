@@ -54,6 +54,8 @@ export default async function EditInstructorPage({ params }: { params: Promise<{
                     phone: instructor.phone ?? "",
                     email: instructor.email ?? "",
                     status: instructor.active ? "active" : "inactive",
+                    teachesCode: instructor.teachesCode ? "on" : "",
+                    teachesDriving: instructor.teachesDriving ? "on" : "",
                 }}
             />
         </>
