@@ -38,6 +38,7 @@ export const MIN_DURATION = 15;
 export const MAX_DURATION = 720;
 
 const MINUTES_PER_DAY = 1440;
+export const MAX_WEEKS = 52;
 
 export type LessonField =
     | "studentId"
@@ -50,7 +51,9 @@ export type LessonField =
     | "duration"
     | "priceMode"
     | "price"
-    | "notes";
+    | "notes"
+    | "repeat"
+    | "count";
 
 export type LessonFormState = FormState<LessonField>;
 
@@ -66,6 +69,8 @@ export const LESSON_FIELDS: readonly LessonField[] = [
     "priceMode",
     "price",
     "notes",
+    "repeat",
+    "count",
 ];
 
 export type LessonInput = {
@@ -83,7 +88,7 @@ export type LessonInput = {
 };
 
 export type LessonParseResult =
-    | { ok: true; data: LessonInput; date: string }
+    | { ok: true; data: LessonInput; date: string; weeks: number }
     | { ok: false; errors: NonNullable<LessonFormState["errors"]>; values: NonNullable<LessonFormState["values"]> };
 
 /** The minute of the day when a lesson ends, or null when the time or duration is not valid. */
@@ -149,6 +154,13 @@ export function parseLessonForm(formData: FormData, timeZone: string): LessonPar
         }
     }
 
+    // Repeating every week: only the create form sends these. One lesson per week, same day and time.
+    let weeks = 1;
+    if (v.repeat === "weekly") {
+        weeks = /^\d+$/.test(v.count) ? Number(v.count) : 0;
+        if (weeks < 2 || weeks > MAX_WEEKS) errors.count = `Indiquez entre 2 et ${MAX_WEEKS} semaines.`;
+    }
+
     if (v.notes.length > 2000) errors.notes = "2000 caractères au maximum.";
 
     if (Object.keys(errors).length > 0) return { ok: false, errors, values: v };
@@ -157,6 +169,7 @@ export function parseLessonForm(formData: FormData, timeZone: string): LessonPar
     return {
         ok: true,
         date: v.date,
+        weeks,
         data: {
             studentId: v.studentId,
             instructorId: v.instructorId,

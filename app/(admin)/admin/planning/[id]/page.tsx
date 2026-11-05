@@ -96,6 +96,8 @@ export default async function EditLessonPage({ params }: { params: Promise<{ id:
                     priceMode: lesson.customPriceMode ?? "",
                     price: toMoneyInput(lesson.customPrice),
                     notes: lesson.notes ?? "",
+                    repeat: "once",
+                    count: "",
                 }}
             />
         </>

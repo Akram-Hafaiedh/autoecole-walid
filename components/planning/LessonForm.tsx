@@ -58,6 +58,7 @@ export function LessonForm({
     const [date, setDate] = useState(initial.date);
     const [time, setTime] = useState(initial.time);
     const [duration, setDuration] = useState(initial.duration);
+    const [repeat, setRepeat] = useState(state.values?.repeat ?? initial.repeat);
     const [priceMode, setPriceMode] = useState(state.values?.priceMode ?? initial.priceMode);
 
     const end = endMinutes(time, duration);
@@ -228,6 +229,29 @@ export function LessonForm({
                     <textarea {...props("notes")} rows={3} maxLength={2000} />
                 </Field>
             </Section>
+
+            {!withStatus && (
+                <Section
+                    title="Répétition"
+                    description="Pour un élève qui vient chaque semaine : la leçon est créée aux mêmes jour et heure. Une semaine déjà occupée est ignorée."
+                >
+                    <Field name="repeat" label="Répéter">
+                        <select
+                            {...props("repeat", true)}
+                            value={repeat}
+                            onChange={(event) => setRepeat(event.target.value)}
+                        >
+                            <option value="once">Une seule fois</option>
+                            <option value="weekly">Toutes les semaines</option>
+                        </select>
+                    </Field>
+                    {repeat === "weekly" && (
+                        <Field name="count" label="Nombre de semaines" error={error("count")} hint="Y compris cette première leçon (2 à 52).">
+                            <input {...props("count")} type="number" inputMode="numeric" min={2} max={52} required />
+                        </Field>
+                    )}
+                </Section>
+            )}
 
             <Section
                 title="Prix"

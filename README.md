@@ -107,6 +107,10 @@ minutes). It must end before midnight. The grid starts at 06:00 and ends at 21:0
 and grows by itself when a lesson falls outside (`DEFAULT_START_HOUR` and
 `DEFAULT_END_HOUR` in `lib/planning.ts`).
 
+When creating a lesson, "Répétition" repeats it every week (2 to 52 weeks) at the same day and
+time. A week where the instructor, car or student is already busy is skipped, and the planning
+says how many lessons were created and how many weeks were skipped.
+
 Times are shown on the school's clock, `timeZone` in `lib/site.ts` (Africa/Tunis),
 whatever the server or the browser uses.
 

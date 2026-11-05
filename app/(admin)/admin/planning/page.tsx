@@ -36,6 +36,8 @@ type SearchParams = Promise<{
     moniteur?: string;
     vehicule?: string;
     annulees?: string;
+    repetees?: string;
+    ignorees?: string;
 }>;
 
 const chip = "inline-flex items-center px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-brand";
@@ -57,6 +59,8 @@ export default async function PlanningPage({ searchParams }: { searchParams: Sea
     const instructorId = params.moniteur && isUuid(params.moniteur) ? params.moniteur : undefined;
     const carId = params.vehicule && isUuid(params.vehicule) ? params.vehicule : undefined;
     const showCancelled = params.annulees === "1";
+    const created = Math.min(Number(params.repetees) || 0, 52);
+    const skipped = Math.min(Number(params.ignorees) || 0, 52);
 
     const firstDay = dayView ? day : start;
     const from = zonedTimeToUtc(firstDay, "00:00", timeZone);
@@ -201,6 +205,13 @@ export default async function PlanningPage({ searchParams }: { searchParams: Sea
                     </Link>
                 }
             />
+
+            {created > 0 && (
+                <p role="status" className="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm">
+                    {created} leçon{created > 1 ? "s" : ""} créée{created > 1 ? "s" : ""}
+                    {skipped > 0 && ` · ${skipped} semaine${skipped > 1 ? "s" : ""} ignorée${skipped > 1 ? "s" : ""} (déjà occupée${skipped > 1 ? "s" : ""})`}.
+                </p>
+            )}
 
             <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-3">
                 <div role="group" aria-label="Affichage" className="inline-flex rounded-lg border border-line-strong bg-surface p-0.5">

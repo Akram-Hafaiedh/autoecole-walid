@@ -19,7 +19,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { planningHref } from "@/lib/planning";
 import { site } from "@/lib/site";
-import { formatRange, utcToZoned } from "@/lib/time";
+import { addDays, formatRange, formatTime, utcToZoned, zonedTimeToUtc } from "@/lib/time";
 
 const FIX_FIELDS = "Corrigez les champs en rouge.";
 
@@ -151,8 +151,31 @@ export async function createLesson(_previous: LessonFormState, formData: FormDat
         return explain(error, formData);
     }
 
+    // Repeat every week: the first lesson is already saved. A week that clashes is skipped, not fatal.
+    let skipped = 0;
+    const { weeks } = parsed;
+    if (weeks > 1) {
+        const first = parsed.data;
+        const length = first.endsAt.getTime() - first.startsAt.getTime();
+        const time = formatTime(utcToZoned(first.startsAt, site.timeZone).minutes);
+        for (let i = 1; i < weeks; i++) {
+            const startsAt = zonedTimeToUtc(addDays(parsed.date, 7 * i), time, site.timeZone);
+            const next: LessonInput = { ...first, startsAt, endsAt: new Date(startsAt.getTime() + length) };
+            if (Object.keys(await findConflicts(next)).length > 0) {
+                skipped++;
+                continue;
+            }
+            try {
+                await prisma.lesson.create({ data: { ...next, ...(await priceFor(next)) } });
+            } catch {
+                skipped++;
+            }
+        }
+    }
+
     revalidatePath("/admin/planning");
-    redirect(planningHref({ semaine: parsed.date }));
+    const base = planningHref({ semaine: parsed.date });
+    redirect(weeks > 1 ? `${base}${base.includes("?") ? "&" : "?"}repetees=${weeks - skipped}&ignorees=${skipped}` : base);
 }
 
 export async function updateLesson(

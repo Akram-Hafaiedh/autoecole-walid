@@ -28,7 +28,7 @@ What the project does not have yet, most important first. Tick a box when it is 
 
 - [ ] **Roles.** Owner, secretary, and an instructor who only sees their own lessons (today an account is either `user`, with no access, or `admin`).
 - [ ] **Availability.** Working hours and days off per instructor, downtime per car. The planning only prevents overlaps; it does not know that an instructor does not work on Friday.
-- [ ] **Recurring lessons.** Every lesson is created one by one.
+- [x] **Recurring lessons.** "Répétition" when creating a lesson: every week for 2 to 52 weeks, busy weeks skipped.
 - [ ] **Exams.** Exam dates per student, shown in the planning.
 - [ ] **Student documents.** A place for the ID copy, medical certificate and photos.
 - [ ] **History of changes.** Who edited what, and when.

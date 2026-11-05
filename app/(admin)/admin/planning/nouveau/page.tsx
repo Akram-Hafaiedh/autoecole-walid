@@ -59,6 +59,8 @@ export default async function NewLessonPage({ searchParams }: { searchParams: Se
                     priceMode: "",
                     price: "",
                     notes: "",
+                    repeat: "once",
+                    count: "8",
                 }}
             />
         </>
